@@ -309,31 +309,32 @@ CREATE TABLE annotations (
 ## 8. Development Roadmap
 
 ### Sprint 1 (Week 1–2): Foundation
-- [  ] Project scaffolding (Next.js, Tailwind, shadcn/ui, Supabase)
-- [  ] Landing page with upload zone
-- [  ] PDF processing pipeline (upload → thumbnail generation → storage)
-- [  ] Scope declaration screen
+- [x] Project scaffolding (Next.js, Tailwind, shadcn/ui, Supabase)
+- [x] Landing page with upload zone
+- [x] PDF processing pipeline (upload → thumbnail generation → storage)
+- [x] Scope declaration screen
 
 ### Sprint 2 (Week 3–4): Structure Builder
-- [  ] Exam Structure Builder component (questions, types, sub-questions)
-- [  ] Version management (tabs, cloning)
-- [  ] Drag-and-drop reordering
-- [  ] Exam data persistence (Zustand + Supabase)
+- [x] Exam Structure Builder component (questions, types, sub-questions)
+- [x] Version management (tabs, cloning)
+- [ ] Drag-and-drop reordering
+- [x] Exam data persistence (Zustand)
+- [ ] Supabase persistence
 
 ### Sprint 3 (Week 5–6): PDF Annotation
-- [  ] PDF.js viewer integration
-- [  ] Fabric.js overlay canvas
-- [  ] Drawing tools (circle, rectangle, freehand)
-- [  ] Region-to-question assignment flow
-- [  ] Assignment sidebar
+- [x] PDF.js viewer integration
+- [x] Fabric.js overlay canvas
+- [x] Drawing tools (circle, rectangle, freehand)
+- [x] Region-to-question assignment flow
+- [x] Assignment sidebar
 
 ### Sprint 4 (Week 7–8): Extraction & Export
-- [  ] Tesseract.js integration for OCR
-- [  ] Content editing interface
-- [  ] MCQ options editor
-- [  ] BiDi text engine
-- [  ] PDF export with @react-pdf/renderer
-- [  ] Live preview
+- [x] Tesseract.js integration for OCR
+- [x] Content editing interface
+- [x] MCQ options editor
+- [x] BiDi text engine
+- [x] PDF export with @react-pdf/renderer
+- [x] Live preview
 
 ### Sprint 5 (Week 9–10): Polish & Launch
 - [  ] Dark/light mode

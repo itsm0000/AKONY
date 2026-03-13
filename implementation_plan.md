@@ -29,7 +29,7 @@
 
 | Phase | Name | Scope | Status |
 |-------|------|-------|--------|
-| **MVP** | Core Builder | Upload, structure, mark, generate | 🔲 To Build |
+| **MVP** | Core Builder | Upload, structure, mark, generate | 🔄 In Progress (80%) |
 | **Phase 2** | Smart Features | OCR auto-extract, question bank, templates | 🔲 Planned |
 | **Phase 3** | Collaboration | Multi-teacher, sharing, school accounts | 🔲 Future |
 | **Phase 4** | Mobile | React Native / Capacitor wrapper | 🔲 Future |
