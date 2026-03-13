@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AppHeader } from "@/components/AppHeader";
 import "./globals.css";
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
@@ -38,7 +39,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AppHeader />
+          <div className="flex-1">{children}</div>
         </ThemeProvider>
       </body>
     </html>

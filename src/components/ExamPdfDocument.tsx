@@ -262,19 +262,32 @@ export function ExamPdfDocument({ exam, version, showAnswerKey = false }: ExamPd
       {/* Answer Key Page (optional) */}
       {showAnswerKey && (
         <Page size="A4" style={styles.page}>
-          <Text style={styles.headerTitle}>مفتاح الإجابة — نموذج ({version.label})</Text>
+          <Text style={[styles.headerTitle, { marginBottom: 20 }]}>
+            مفتاح الإجابة — نموذج ({version.label})
+          </Text>
           {version.questions.map((q) => (
-            <View key={q.id} style={{ marginBottom: 8 }}>
-              <Text style={{ fontSize: 10, fontWeight: 700 }}>
-                السؤال {q.questionNumber}:
-              </Text>
+            <View key={q.id} style={{ marginBottom: 12 }}>
+              <View style={{ flexDirection: "row-reverse", alignItems: "center", marginBottom: 6, gap: 6 }}>
+                <Text style={{ fontSize: 11, fontWeight: 700, color: "#111" }}>
+                  السؤال {q.questionNumber}:
+                </Text>
+                <Text style={{ fontSize: 9, color: "#666" }}>
+                  ({QUESTION_TYPE_LABELS[q.type]})
+                </Text>
+              </View>
+
               {q.subQuestions.map((sub) => (
-                <View key={sub.id} style={{ flexDirection: "row-reverse", gap: 4, paddingRight: 12 }}>
-                  <Text style={{ fontSize: 9, fontWeight: 700 }}>{sub.label})</Text>
-                  <Text style={{ fontSize: 9, color: "#333" }}>
+                <View key={sub.id} style={{ flexDirection: "row-reverse", gap: 6, paddingRight: 16, marginBottom: 4 }}>
+                  <Text style={{ fontSize: 10, fontWeight: 700, color: "#333", minWidth: 16 }}>
+                    {sub.label})
+                  </Text>
+                  <Text style={{ fontSize: 10, color: "#222" }}>
                     {sub.type === "mcq" && sub.mcqOptions
-                      ? sub.mcqOptions.find((o) => o.isCorrect)?.label ?? "—"
-                      : sub.contentText?.slice(0, 60) || "—"}
+                      ? (() => {
+                          const correct = sub.mcqOptions.find((o) => o.isCorrect);
+                          return correct ? `${correct.label} — ${correct.text}` : "لم يتم تحديد إجابة صحيحة";
+                        })()
+                      : sub.contentText?.slice(0, 80) + (sub.contentText?.length > 80 ? "..." : "") || "—"}
                   </Text>
                 </View>
               ))}

@@ -83,8 +83,8 @@ export default function ScopePage() {
               <CardTitle className="text-lg">نطاق الصفحات</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="w-full sm:flex-1">
                   <Label htmlFor="start-page" className="mb-2 block text-sm text-muted-foreground">
                     من صفحة
                   </Label>
@@ -99,9 +99,9 @@ export default function ScopePage() {
                   />
                 </div>
 
-                <span className="mt-6 text-xl text-muted-foreground">←</span>
+                <span className="my-2 sm:my-0 sm:mt-6 text-xl text-muted-foreground rotate-90 sm:rotate-0">←</span>
 
-                <div className="flex-1">
+                <div className="w-full sm:flex-1">
                   <Label htmlFor="end-page" className="mb-2 block text-sm text-muted-foreground">
                     إلى صفحة
                   </Label>

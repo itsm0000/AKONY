@@ -49,7 +49,7 @@ export default function EditPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex items-center justify-between"
+          className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
             <h1 className="text-2xl font-bold text-foreground">تحرير المحتوى</h1>
@@ -57,8 +57,8 @@ export default function EditPage() {
               عدّل نصوص الأسئلة وأضف خيارات الإجابة — {exam.title}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.push(`/exam/${examId}/mark`)}>
+          <div className="flex w-full sm:w-auto gap-2">
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => router.push(`/exam/${examId}/mark`)}>
               ← تحديد المحتوى
             </Button>
             <Button
@@ -84,7 +84,7 @@ export default function EditPage() {
               <label className="mb-1 block text-[10px] text-muted-foreground">اسم المدرسة</label>
               <Input
                 value={exam.metadata.schoolName}
-                onChange={() => {}} // Connected to store
+                onChange={(e) => useExamStore.getState().setMetadata({ schoolName: e.target.value })}
                 placeholder="مدرسة ..."
                 className="h-8 text-xs"
                 dir="rtl"
@@ -94,7 +94,7 @@ export default function EditPage() {
               <label className="mb-1 block text-[10px] text-muted-foreground">المادة</label>
               <Input
                 value={exam.metadata.subject}
-                onChange={() => {}}
+                onChange={(e) => useExamStore.getState().setMetadata({ subject: e.target.value })}
                 placeholder="الرياضيات"
                 className="h-8 text-xs"
                 dir="rtl"
@@ -104,7 +104,7 @@ export default function EditPage() {
               <label className="mb-1 block text-[10px] text-muted-foreground">الصف</label>
               <Input
                 value={exam.metadata.grade}
-                onChange={() => {}}
+                onChange={(e) => useExamStore.getState().setMetadata({ grade: e.target.value })}
                 placeholder="الثالث ثانوي"
                 className="h-8 text-xs"
                 dir="rtl"
@@ -114,7 +114,7 @@ export default function EditPage() {
               <label className="mb-1 block text-[10px] text-muted-foreground">المدة</label>
               <Input
                 value={exam.metadata.duration}
-                onChange={() => {}}
+                onChange={(e) => useExamStore.getState().setMetadata({ duration: e.target.value })}
                 placeholder="ساعتان"
                 className="h-8 text-xs"
                 dir="rtl"
@@ -124,7 +124,7 @@ export default function EditPage() {
               <label className="mb-1 block text-[10px] text-muted-foreground">التاريخ</label>
               <Input
                 value={exam.metadata.date}
-                onChange={() => {}}
+                onChange={(e) => useExamStore.getState().setMetadata({ date: e.target.value })}
                 placeholder="2025/01/15"
                 className="h-8 text-xs font-inter"
                 dir="ltr"
@@ -134,7 +134,7 @@ export default function EditPage() {
               <label className="mb-1 block text-[10px] text-muted-foreground">الدرجة الكلية</label>
               <Input
                 value={exam.metadata.totalMarks?.toString() ?? ""}
-                onChange={() => {}}
+                onChange={(e) => useExamStore.getState().setMetadata({ totalMarks: e.target.value ? Number(e.target.value) : undefined })}
                 placeholder="100"
                 type="number"
                 className="h-8 text-xs font-inter"
