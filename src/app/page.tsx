@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { set } from "idb-keyval";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { UploadZone } from "@/components/UploadZone";
@@ -18,21 +19,18 @@ export default function HomePage() {
       // Future: Upload to Supabase Storage
       const examId = crypto.randomUUID();
 
-      // Store file reference in sessionStorage for downstream use
+      // Store file reference in IndexedDB for downstream use (handles large PDFs)
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         try {
-          sessionStorage.setItem(
-            `exam-file-${examId}`,
-            JSON.stringify({
-              name: file.name,
-              type: file.type,
-              size: file.size,
-              dataUrl: reader.result,
-            })
-          );
-        } catch {
-          // File too large for sessionStorage — will use alternative
+          await set(`exam-file-${examId}`, {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            dataUrl: reader.result,
+          });
+        } catch (error) {
+          console.error("Failed to store file in IndexedDB:", error);
         }
 
         router.push(`/exam/${examId}/scope`);

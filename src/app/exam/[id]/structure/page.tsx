@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { useExamStore } from "@/lib/stores/examStore";
 import { QuestionCard } from "@/components/QuestionCard";
 import { VersionTabs } from "@/components/VersionTabs";
 import type { QuestionType } from "@/lib/types/exam";
+import { useCategorization } from "@/hooks/useCategorization";
 
 const VERSION_LABELS = ["أ", "ب", "ج", "د", "هـ", "و"];
 
@@ -18,6 +20,7 @@ export default function StructurePage() {
   const {
     exam,
     activeVersionId,
+    categorizedMaterial,
     setActiveVersion,
     addVersion,
     addQuestion,
@@ -27,6 +30,16 @@ export default function StructurePage() {
     removeSubQuestion,
     updateSubQuestion,
   } = useExamStore();
+
+  const { runCategorization, isProcessing, error } = useCategorization();
+  const initRef = useRef(false);
+
+  useEffect(() => {
+    if (exam && !categorizedMaterial && !initRef.current) {
+      initRef.current = true;
+      runCategorization(examId, exam.materialId, exam.scope.startPage, exam.scope.endPage);
+    }
+  }, [exam, categorizedMaterial, runCategorization, examId]);
 
   const activeVersion = exam?.versions.find((v) => v.id === activeVersionId);
 
@@ -42,7 +55,7 @@ export default function StructurePage() {
   };
 
   const handleProceed = () => {
-    router.push(`/exam/${examId}/mark`);
+    router.push(`/exam/${examId}/edit`);
   };
 
   if (!exam) {
@@ -52,6 +65,41 @@ export default function StructurePage() {
           <p className="text-lg text-muted-foreground">لم يتم العثور على الامتحان</p>
           <Button variant="outline" className="mt-4" onClick={() => router.push("/")}>
             العودة للرئيسية
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
+  if (isProcessing) {
+    return (
+      <main className="flex min-h-screen items-center justify-center relative">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-40 end-1/4 h-[400px] w-[400px] rounded-full bg-[oklch(0.65_0.20_250/0.06)] blur-[120px]" />
+        </div>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-6 z-10 glass-card p-12 rounded-3xl"
+        >
+          <div className="h-16 w-16 animate-spin rounded-full border-4 border-muted border-t-primary mx-auto" />
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">جاري تحليل المنهج...</h2>
+            <p className="text-muted-foreground mt-2 font-inter"> الذكاء الاصطناعي يقوم باستخراج الأسئلة والتعاريف</p>
+          </div>
+        </motion.div>
+      </main>
+    );
+  }
+
+  if (error && !categorizedMaterial) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <div className="text-center glass-card p-8 rounded-2xl max-w-md">
+          <p className="text-lg font-bold text-destructive mb-2">فشل التحليل</p>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            حاول مرة أخرى
           </Button>
         </div>
       </main>
@@ -166,7 +214,7 @@ export default function StructurePage() {
             disabled={!activeVersion || activeVersion.questions.length === 0}
             className="accent-gradient w-full border-0 text-base font-semibold text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
           >
-            التالي — تحديد المحتوى من المنهج ←
+            التالي — مراجعة وتحرير الأسئلة ←
           </Button>
         </motion.div>
       </div>

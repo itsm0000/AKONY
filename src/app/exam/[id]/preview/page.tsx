@@ -208,7 +208,7 @@ function ExamPreview({
           width: "100%",
           maxWidth: 720,
           minHeight: 900,
-          padding: "40px 48px",
+          padding: "30px 40px",
           fontFamily: "'IBM Plex Sans Arabic', sans-serif",
           direction: "rtl",
           color: "#111",
@@ -235,7 +235,7 @@ function ExamPreview({
 
         {/* Questions */}
         {version.questions.map((q) => (
-          <div key={q.id} style={{ marginBottom: 20 }}>
+          <div key={q.id} style={{ marginBottom: 16 }}>
             <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
               السؤال {q.questionNumber}: ({QUESTION_TYPE_LABELS[q.type]})
             </p>
@@ -280,10 +280,6 @@ function ExamPreview({
           </div>
         ))}
 
-        {/* Footer */}
-        <p style={{ textAlign: "center", fontSize: 8, color: "#bbb", marginTop: 40 }}>
-          تم إنشاء هذا الامتحان بواسطة AKONY — صانع الامتحانات الذكي
-        </p>
       </div>
 
       {/* Answer Key */}

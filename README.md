@@ -17,13 +17,13 @@
 
 ## 🎯 What is AKONY?
 
-AKONY is a **free, browser-based exam builder** designed specifically for Arabic-speaking educators. It solves the pain of manually creating exams from textbooks by providing an intelligent workflow:
+AKONY is a **free, browser-based exam builder** designed specifically for Arabic-speaking educators. It solves the pain of manually creating exams from textbooks by providing an intelligent, AI-powered workflow:
 
 1. **Upload** your curriculum PDF or textbook images
-2. **Define** the exam structure (questions, sub-questions, types)
-3. **Annotate** the PDF to mark which content maps to which question
-4. **Edit** extracted text, add MCQ options, and refine content
-5. **Export** a print-ready RTL PDF with multiple exam versions
+2. **Analyze** the content instantly with the Google Gemini 2.5 Flash Vision AI
+3. **Structure** the exam using AI-suggested categories, Quick-Start templates, and difficulty ratings
+4. **Edit** extracted text, add MCQ options, and evaluate the exam balance with AI
+5. **Export** a print-ready, optimized RTL PDF with multiple exam versions
 
 ### ✨ Key Features
 
@@ -31,12 +31,12 @@ AKONY is a **free, browser-based exam builder** designed specifically for Arabic
 |---------|-------------|
 | 🌙 **Dark-First UI** | Premium glassmorphism design with dark mode default |
 | 🔤 **Full RTL/Arabic** | IBM Plex Arabic font, BiDi text engine, RTL layouts |
-| 📄 **PDF Annotation** | Draw rectangles, circles, and freehand on uploaded PDFs |
-| ✏️ **OCR Integration** | Extract text from PDF/images using Tesseract.js (Arabic + English) |
+| 🧠 **Vision AI** | Google Gemini 2.5 Flash for instant PDF content extraction & smart categorization |
+| ⚡ **Smart Builder** | Auto-fill questions from PDF, Quick-Start exam templates, and Difficulty sliders (1-10) |
 | 📝 **MCQ Editor** | Add 2–6 options with correct answer marking |
 | 📊 **Multi-Version** | Create exam versions (أ, ب, ج, د) from one structure |
-| 📤 **PDF Export** | A4 RTL PDF with @react-pdf/renderer + answer key generation |
-| 🆓 **100% Free** | No backend costs — all processing happens in the browser |
+| 📤 **PDF Export** | Compact A4 RTL PDF with @react-pdf/renderer + answer key generation |
+| 🆓 **100% Free** | All UI/client processing runs in-browser, leveraging free-tier APIs |
 
 ---
 
@@ -49,12 +49,11 @@ AKONY is a **free, browser-based exam builder** designed specifically for Arabic
 | **Styling** | Tailwind CSS v4 + shadcn/ui | Design system with 10 UI components |
 | **State** | Zustand | Client-side exam state management |
 | **Animation** | Framer Motion | Page transitions, micro-interactions |
-| **PDF Viewer** | PDF.js v5 | Render uploaded PDFs in-browser |
-| **Annotation** | Fabric.js v7 | Canvas overlay for drawing on PDFs |
-| **OCR** | Tesseract.js | Arabic + English text extraction |
+| **PDF Conversion** | PDF.js v5 | Render uploaded PDFs as images for Vision AI |
+| **Vision AI** | Google Gemini SDK | Multimodal analysis, OCR, and smart categorization |
+| **Caching** | Supabase | Server-side caching for AI categorization results |
 | **PDF Export** | @react-pdf/renderer | Generate A4 RTL exam PDFs |
 | **Theme** | next-themes | Dark/light mode with system detection |
-| **Auth (planned)** | Supabase | Authentication + cloud storage |
 
 ---
 
@@ -155,25 +154,24 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ```
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│   Upload     │───▶│    Scope     │───▶│  Structure   │
-│  PDF/Image   │    │ Title, Pages │    │  Questions   │
+│   Upload     │───▶│ AI Analysis  │───▶│  Structure   │
+│  PDF/Image   │    │ Google Gemini│    │ Smart Builder│
 └──────────────┘    └──────────────┘    └──────────────┘
                                                │
                                                ▼
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│   Export     │◀───│    Edit      │◀───│  Annotate    │
-│  PDF + Key   │    │ Text + MCQ   │    │  Draw on PDF │
+│   Export     │◀───│    Edit      │◀───│ Auto-Fill    │
+│  PDF + Key   │    │ Text + MCQ   │    │ Suggestion   │
 └──────────────┘    └──────────────┘    └──────────────┘
 ```
 
 ### Step-by-Step
 
-1. **Landing Page** (`/`) — Upload curriculum PDF or textbook images (drag-and-drop, max 50MB)
-2. **Scope** (`/exam/[id]/scope`) — Set exam title, page range, and optional chapters
-3. **Structure** (`/exam/[id]/structure`) — Add questions with 6 types, manage sub-questions, create versions
-4. **Annotate** (`/exam/[id]/mark`) — View PDF with drawing tools, link annotations to questions
-5. **Edit** (`/exam/[id]/edit`) — Edit extracted text, add MCQ options, fill in metadata
-6. **Preview** (`/exam/[id]/preview`) — Live A4 paper preview, toggle answer key, download PDF
+1. **Landing Page** (`/`) — Upload curriculum PDF or textbook images (drag-and-drop)
+2. **Analysis** — The app converts the PDF to images and calls the `gemini-2.5-flash` endpoint to extract and categorize questions from the syllabus.
+3. **Structure** (`/exam/[id]/structure`) — Apply Quick-Start Templates, set a Global Difficulty, and automatically fill the exam with AI suggestions by clicking the "✨ (Magic Wand)".
+4. **Edit** (`/exam/[id]/edit`) — Edit extracted text, add MCQ options, fill in metadata, and optionally click "Evaluate Exam" for an AI review of the test balance.
+5. **Preview** (`/exam/[id]/preview`) — Live A4 paper preview, toggle answer key, download the compacted, watermark-free PDF.
 
 ---
 

@@ -26,11 +26,11 @@ Font.register({
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 30,
     fontFamily: "IBM Plex Arabic",
-    fontSize: 11,
+    fontSize: 10,
     direction: "rtl",
-    lineHeight: 1.8,
+    lineHeight: 1.5,
   },
   header: {
     borderBottom: "2px solid #333",
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     color: "#555",
   },
   question: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   questionHeader: {
     flexDirection: "row-reverse",
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: "absolute",
-    bottom: 20,
+    bottom: 15,
     left: 40,
     right: 40,
     textAlign: "center",
@@ -253,10 +253,6 @@ export function ExamPdfDocument({ exam, version, showAnswerKey = false }: ExamPd
           <QuestionBlock key={q.id} question={q} />
         ))}
 
-        {/* Footer */}
-        <Text style={styles.footer}>
-          تم إنشاء هذا الامتحان بواسطة AKONY — صانع الامتحانات الذكي
-        </Text>
       </Page>
 
       {/* Answer Key Page (optional) */}

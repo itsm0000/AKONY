@@ -12,8 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { useExamStore } from "@/lib/stores/examStore";
 import type { Question, SubQuestion, QuestionType } from "@/lib/types/exam";
 import { QUESTION_TYPE_LABELS } from "@/lib/types/exam";
+import type { ExamQuestionSuggestion } from "@/hooks/useCategorization";
 
 interface QuestionCardProps {
   question: Question;
@@ -43,6 +45,51 @@ export function QuestionCard({
   onUpdateSubQuestion,
 }: QuestionCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isPromptingCount, setIsPromptingCount] = useState(false);
+  const [requestedCount, setRequestedCount] = useState(5);
+  const { categorizedMaterial } = useExamStore();
+
+  const getSuggestions = (type: QuestionType) => {
+    console.log("Categorized Material in Store:", categorizedMaterial);
+    
+    if (!categorizedMaterial) return [];
+    switch (type) {
+      case "problem": return categorizedMaterial.problemSolving || [];
+      case "definition": return categorizedMaterial.definitions || [];
+      case "mcq": return categorizedMaterial.multipleChoice || [];
+      case "comparison": return categorizedMaterial.comparisons || [];
+      case "drawing": return categorizedMaterial.drawings || [];
+      case "short_answer": 
+        return [
+          ...(categorizedMaterial.shortAnswers || []),
+          ...(categorizedMaterial.justifications || []),
+          ...(categorizedMaterial.dependencies || [])
+        ];
+      default: return [];
+    }
+  };
+
+  const handleAutoFill = (count: number) => {
+    const suggestions = getSuggestions(question.type);
+    if (!suggestions || suggestions.length === 0) return;
+
+    const toAdd = suggestions.slice(0, count);
+    const LABELS = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح"];
+    
+    const currentCount = question.subQuestions.length;
+    
+    const newSubQuestions: SubQuestion[] = toAdd.map((suggestion: ExamQuestionSuggestion, idx: number) => ({
+      id: crypto.randomUUID(),
+      label: LABELS[(currentCount + idx) % LABELS.length] || `${currentCount + idx + 1}`,
+      type: question.type,
+      contentText: suggestion.text,
+      sortOrder: currentCount + idx,
+    }));
+
+    onUpdate({ subQuestions: [...question.subQuestions, ...newSubQuestions] });
+  };
+
+  const suggestionsAvailable = getSuggestions(question.type).length;
 
   return (
     <motion.div
@@ -156,56 +203,119 @@ export function QuestionCard({
               </div>
             </div>
 
+            {/* Auto Fill Button */}
+            {suggestionsAvailable > 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-2">
+                {!isPromptingCount ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                        setRequestedCount(Math.min(5, suggestionsAvailable));
+                        setIsPromptingCount(true);
+                    }}
+                    className="w-full gap-2 bg-primary/10 text-primary hover:bg-primary/20"
+                  >
+                    <span className="text-base">✨</span>
+                    تعبئة تلقائية باستخدام الذكاء الاصطناعي ({suggestionsAvailable} مقترح متاح)
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2">
+                    <span className="text-sm font-medium text-primary flex-1">كم عدد الفروع المطلوبة؟</span>
+                    <Input 
+                      type="number" 
+                      min={1} 
+                      max={suggestionsAvailable} 
+                      value={requestedCount} 
+                      onChange={(e) => setRequestedCount(parseInt(e.target.value) || 1)}
+                      className="h-8 w-20 text-center"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                          setIsPromptingCount(false);
+                          handleAutoFill(requestedCount);
+                      }}
+                      className="h-8 px-4"
+                    >
+                      تأكيد
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => setIsPromptingCount(false)}
+                      className="h-8 px-2 text-muted-foreground"
+                    >
+                      إلغاء
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
             {/* Sub-questions */}
             {question.subQuestions.length > 0 && (
               <div className="space-y-2 rounded-xl bg-muted/30 p-3">
                 {question.subQuestions.map((sub) => (
                   <div
                     key={sub.id}
-                    className="flex items-center gap-2 rounded-lg bg-background/50 px-3 py-2"
+                    className="flex flex-col gap-2 rounded-lg bg-background/50 px-3 py-2"
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
-                      {sub.label}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
+                        {sub.label}
+                      </span>
 
-                    <Select
-                      value={sub.type}
-                      onValueChange={(val) =>
-                        onUpdateSubQuestion(sub.id, { type: val as QuestionType })
-                      }
-                    >
-                      <SelectTrigger className="h-7 max-w-[160px] text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(QUESTION_TYPE_LABELS).map(([key, label]) => (
-                          <SelectItem key={key} value={key} className="text-xs">
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <button
-                      onClick={() => onRemoveSubQuestion(sub.id)}
-                      className="ms-auto rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
-                      title="حذف الفرع"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                      <Select
+                        value={sub.type}
+                        onValueChange={(val) =>
+                          onUpdateSubQuestion(sub.id, { type: val as QuestionType })
+                        }
                       >
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                      </svg>
-                    </button>
+                        <SelectTrigger className="h-7 max-w-[160px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(QUESTION_TYPE_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key} className="text-xs">
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <button
+                        onClick={() => onRemoveSubQuestion(sub.id)}
+                        className="ms-auto rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
+                        title="حذف الفرع"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                           <path d="M18 6 6 18" />
+                           <path d="m6 6 12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {/* Content Textarea */}
+                    <div className="flex w-full">
+                      <textarea
+                        value={sub.contentText}
+                        onChange={(e) => onUpdateSubQuestion(sub.id, { contentText: e.target.value })}
+                        placeholder="نص السؤال..."
+                        dir="rtl"
+                        className="flex min-h-[60px] w-full resize-y rounded-md border border-input bg-background/80 px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

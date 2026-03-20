@@ -12,11 +12,10 @@ Teachers in Iraq (and the Arab world) spend **hours** manually creating exams:
 ### The Solution
 **AKONY** is an exam builder that lets teachers:
 1. **Upload** their curriculum PDF or textbook photos
-2. **Declare** the exam scope (chapters/pages)
-3. **Structure** the exam skeleton (question types, sub-questions, rules)
-4. **Mark** content by drawing directly on the PDF
-5. **Edit** extracted text and modify values
-6. **Generate** perfectly formatted, RTL-correct exam documents in multiple versions
+2. **Analyze** the document instantly with Google Gemini Vision AI
+3. **Structure** the exam skeleton using AI suggestions (categories, difficulty levels)
+4. **Edit** extracted equations, text, and modify MCQ options
+5. **Generate** perfectly formatted, RTL-correct exam documents in multiple versions
 
 ### Target Users
 - **Primary:** Iraqi high school teachers (physics, math, chemistry)
@@ -29,31 +28,30 @@ Teachers in Iraq (and the Arab world) spend **hours** manually creating exams:
 
 ```mermaid
 graph TB
-    subgraph "Frontend (Next.js 14)"
-        A[Landing/Upload] --> B[Scope Selector]
+    subgraph "Frontend (Next.js 16)"
+        A[Landing/Upload] --> B[AI Analysis Pipeline]
         B --> C[Structure Builder]
-        C --> D[PDF Annotator]
-        D --> E[Content Editor]
+        C --> E[Content Editor]
         E --> F[Preview & Export]
     end
 
     subgraph "Services"
-        G[OCR Engine<br/>Tesseract.js]
+        G[Google Gemini 2.5 Flash]
         H[BiDi Text Engine]
         I[PDF Export Engine<br/>react-pdf/renderer]
     end
 
     subgraph "Backend (Supabase)"
-        J[(PostgreSQL)]
+        J[(PostgreSQL / Cache)]
         K[Auth]
         L[Storage<br/>PDFs & Images]
     end
 
-    D --> G
+    B --> G
     E --> H
     F --> I
     C --> J
-    D --> J
+    B --> J
     A --> K
     A --> L
 ```
@@ -62,11 +60,10 @@ graph TB
 
 | Decision | Choice | Reasoning |
 |----------|--------|-----------|
-| **Framework** | Next.js 14 (App Router) | SSR for fast loads, API routes, file-based routing, massive ecosystem |
+| **Framework** | Next.js 16 (App Router) | SSR for fast loads, API routes, file-based routing, massive ecosystem |
 | **UI Library** | shadcn/ui + Tailwind | Free, customizable, accessible, RTL-friendly with CSS logical properties |
-| **PDF Viewer** | PDF.js | Free, open-source, the industry standard for browser PDF rendering |
-| **Annotation** | Fabric.js | Free, powerful canvas library, supports drawing shapes/text overlays |
-| **OCR** | Tesseract.js | Completely free, runs in-browser, supports Arabic + English |
+| **PDF Converter**| PDF.js | Free, parses PDF pages to images for the Vision AI |
+| **Vision AI** | Google Gemini | Extremely fast multimodal categorization and smart extraction |
 | **Database** | Supabase (PostgreSQL) | Free tier, auth built-in, storage built-in, real-time |
 | **Export** | @react-pdf/renderer | Free, generates PDF in browser, full control over RTL layout |
 | **State** | Zustand | Lightweight, no boilerplate, supports undo/redo |
@@ -165,17 +162,16 @@ graph TB
 └──────────────────────────────────────┘
 ```
 
-### Step 4: Mark Content on PDF
-- PDF opens in full-screen viewer
-- Teacher circles content with drawing tools
-- Labels each region with a question ID
-- Side panel shows all assignments
+### Step 4: AI Context Analysis
+- PDF is converted to images and sent securely to Google Gemini
+- Gemini classifies questions (difficulty 1-10, type, context)
+- Results are cached in Supabase to avoid redundant AI processing
 
 ### Step 5: Edit Extracted Content
-- OCR extracts text from marked regions
-- Teacher corrects any OCR errors
+- AI auto-fills the chosen exam structure
+- Teacher reviews suggested questions and difficulty ratings
 - Modifies values for different versions (e.g., change 20N → 60N)
-- Manually types text for definition questions
+- Manually adjusts text for generated MCQ or Problem constraints
 
 ### Step 6: Preview & Export
 - Live preview of the complete exam
@@ -293,12 +289,12 @@ CREATE TABLE annotations (
 | 2 | Page range scope selector | Must Have | Low |
 | 3 | Exam structure builder (add Q, sub-Q, types) | Must Have | High |
 | 4 | Version tabs (A, B, C...) | Must Have | Medium |
-| 5 | PDF annotation viewer with drawing tools | Must Have | High |
-| 6 | Region-to-question assignment | Must Have | High |
-| 7 | OCR text extraction (Tesseract.js) | Must Have | Medium |
-| 8 | Content editing + value modification | Must Have | Medium |
-| 9 | Live exam preview | Must Have | Medium |
-| 10 | PDF export with RTL support | Must Have | High |
+| 5 | Google Gemini AI Integration for content extraction | Must Have | High |
+| 6 | Supabase AI Caching system | Must Have | High |
+| 7 | Smart Builder (Auto-fill matching difficulty) | Must Have | Medium |
+| 8 | Content editing + AI evaluation | Must Have | Medium |
+| 9 | Live exam preview (compact styling) | Must Have | Medium |
+| 10 | PDF export with strict RTL math enforcement | Must Have | High |
 | 11 | Dark/light mode | Nice to Have | Low |
 | 12 | Exam header customization | Nice to Have | Low |
 | 13 | Answer key generation | Nice to Have | Medium |

@@ -8,15 +8,18 @@ import type {
   ExamMetadata,
   QuestionType,
 } from "@/lib/types/exam";
+import type { CategorizedData } from "@/hooks/useCategorization";
 
 interface ExamState {
   exam: Exam | null;
   activeVersionId: string | null;
+  categorizedMaterial: CategorizedData | null;
 
   // Actions
   initExam: (materialId: string, title: string) => void;
   setScope: (scope: ExamScope) => void;
   setMetadata: (metadata: Partial<ExamMetadata>) => void;
+  setCategorizedMaterial: (data: CategorizedData) => void;
 
   // Version management
   addVersion: (label: string) => void;
@@ -50,6 +53,7 @@ const createDefaultMetadata = (): ExamMetadata => ({
 export const useExamStore = create<ExamState>((set) => ({
   exam: null,
   activeVersionId: null,
+  categorizedMaterial: null,
 
   initExam: (materialId, title) => {
     const versionId = crypto.randomUUID();
@@ -84,6 +88,8 @@ export const useExamStore = create<ExamState>((set) => ({
         ? { ...state.exam, metadata: { ...state.exam.metadata, ...metadata } }
         : null,
     })),
+
+  setCategorizedMaterial: (data) => set({ categorizedMaterial: data }),
 
   addVersion: (label) =>
     set((state) => {
