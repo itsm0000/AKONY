@@ -135,6 +135,14 @@ export async function POST(req: Request) {
     const prompt = `You are a veteran Iraqi Baccalaureate physics & electronics teacher with 20 years of experience setting final exams.
 You are analyzing educational textbook pages (images provided). Your job is NOT just to copy questions that appear word-for-word. Think like an experienced teacher and GENERATE every possible exam-worthy question this content can support.
 
+**CRITICAL NEGATIVE CONSTRAINT - READ CAREFULLY:**
+The final exam paper will ONLY have text. The student will NOT have access to the textbook, figures, diagrams, or page numbers.
+THEREFORE, you MUST NEVER generate a question that references a figure or page number (e.g., NEVER write "في الشكل 37", "أي من الدوائر التالية", or "بالصفحة 38").
+If you want to ask about a specific circuit or concept from a figure, you MUST describe it entirely in words.
+If it cannot be described in words, DO NOT generate the question.
+The ONLY exception is the DRAWINGS category, where you ask the student to draw something from memory.
+IF YOU BREAK THIS RULE, THE QUESTION IS COMPLETELY USELESS.
+
 GENERATION STRATEGY:
 
 1. DEFINITIONS (definitions array)
@@ -159,6 +167,7 @@ GENERATION STRATEGY:
    - ALSO derive comparisons from any two definitions on the same page even if not explicitly compared in the textbook.
 
 5. JUSTIFICATIONS (justifications array)
+   - STRICT RULE: This array must ONLY contain "علل" (give reason) questions. Do NOT put "اشرح" (explain) or "ما هي" (what is) questions here.
    - For every cause-effect relationship, property, or physical behavior described: "علل: [الظاهرة أو الخاصية]".
    - Examples: "علل: تيار الباعث Ie دائماً أكبر من تيار الجامع Ic", "لماذا يكون ربح التيار β أكبر من 1؟".
 
@@ -172,6 +181,9 @@ GENERATION STRATEGY:
 8. DRAWINGS (drawings array)
    - For EVERY circuit diagram, graph, energy band diagram, characteristic curve, or device illustration visible in the pages: "ارسم [X] مع تسمية أجزائه".
    - Also generate drawing questions for circuits described textually (e.g., "ارسم دائرة المضخم ذو الباعث المشترك").
+
+CRITICAL RULE FOR FIGURES: 
+The student will NOT have the textbook or figures during the exam. Do NOT generate questions that require looking at a specific textbook figure (e.g. "في الشكل 37", "أي من الدوائر التالية"). If a question is about a visual concept, you MUST describe the circuit/figure fully in text so it can be answered without the image. The ONLY exception is the DRAWINGS category, where you ask the student to draw.
 
 DIFFICULTY RUBRIC (use the FULL range — do NOT cluster at 5):
   1-2 = single-term recall

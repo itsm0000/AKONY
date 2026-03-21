@@ -58,8 +58,8 @@ export default function EditPage() {
             </p>
           </div>
           <div className="flex w-full sm:w-auto gap-2">
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => router.push(`/exam/${examId}/mark`)}>
-              ← تحديد المحتوى
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => router.push(`/exam/${examId}/structure`)}>
+              ← بناء الهيكل
             </Button>
             <Button
               size="sm"

@@ -133,7 +133,7 @@ export function QuestionCard({
 }: QuestionCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showBulkPanel, setShowBulkPanel] = useState(false);
-  const [bulkCount, setBulkCount] = useState(3);
+  const [bulkCount, setBulkCount] = useState(5);
   // Track which sub-question IDs have their sub-level picker open
   const [openSubPickers, setOpenSubPickers] = useState<Set<string>>(new Set());
 
@@ -212,7 +212,6 @@ export function QuestionCard({
       ...(question.type === "mcq" ? { mcqOptions: buildMcqOptions(s, mcqOptionsCount) } : {}),
     }));
     onUpdate({ subQuestions: [...question.subQuestions, ...newSubs] });
-    setShowBulkPanel(false);
   };
 
   const toggleSubPicker = (subId: string) => {
@@ -221,6 +220,31 @@ export function QuestionCard({
       next.has(subId) ? next.delete(subId) : next.add(subId);
       return next;
     });
+  };
+
+  const cycleSubQuestion = (subId: string, currentText: string, direction: 1 | -1) => {
+    const pool = [...getPool(question.type)].sort((a, b) => Math.abs(a.difficulty - difficultyTarget) - Math.abs(b.difficulty - difficultyTarget));
+    if (pool.length === 0) return;
+    
+    // Available pool is all AI suggestions EXCEPT those currently occupying OTHER sub-question slots
+    const usedByOthers = new Set(question.subQuestions.filter(s => s.id !== subId).map(s => s.contentText));
+    const validPool = pool.filter(s => !usedByOthers.has(s.text));
+    if (validPool.length === 0) return;
+
+    const currentIndex = validPool.findIndex(s => s.text === currentText);
+    let nextIndex = 0;
+    
+    if (currentIndex !== -1) {
+      nextIndex = currentIndex + direction;
+      if (nextIndex < 0) nextIndex = validPool.length - 1;
+      if (nextIndex >= validPool.length) nextIndex = 0;
+    } else {
+      // User manually typed this or edited it heavily. Just give them the absolute best strictly unused one.
+      const strictlyUnusedIndex = validPool.findIndex(s => !usedTexts.has(s.text));
+      if (strictlyUnusedIndex !== -1) nextIndex = strictlyUnusedIndex;
+    }
+
+    fillSubQuestion(subId, validPool[nextIndex]);
   };
 
   return (
@@ -297,23 +321,38 @@ export function QuestionCard({
 
             {/* ─── AI Section ─── */}
             {totalAvailable > 0 && (
-              <div className="space-y-2">
-                {/* Row: Scroll picker toggle + Bulk Fill */}
-                <div className="flex gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => setShowBulkPanel(!showBulkPanel)} className="flex-1 gap-1.5 bg-primary/10 text-primary hover:bg-primary/20">
-                    <span>✨</span>
-                    {showBulkPanel ? "إخفاء الاقتراحات" : `اقتراحات الذكاء الاصطناعي (${remaining} متاح)`}
-                    <motion.svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" animate={{ rotate: showBulkPanel ? 180 : 0 }}>
-                      <path d="m6 9 6 6 6-6" />
-                    </motion.svg>
-                  </Button>
+              <div className="space-y-3 rounded-xl bg-primary/5 border border-primary/10 p-3">
+                {/* Bulk Generate Row */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <span className="text-sm font-medium text-foreground whitespace-nowrap">عدد الفروع للجيل التلقائي:</span>
+                  <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-background/60 px-2 py-1">
+                      <button onClick={() => setBulkCount(Math.max(1, bulkCount - 1))} className="text-muted-foreground hover:text-foreground transition-colors text-lg px-2">−</button>
+                      <input 
+                        type="number" 
+                        value={bulkCount} 
+                        onChange={(e) => setBulkCount(Number(e.target.value))} 
+                        className="font-inter text-base font-bold text-foreground w-10 text-center bg-transparent focus:outline-none"
+                        dir="ltr"
+                      />
+                      <button onClick={() => setBulkCount(Math.min(remaining, bulkCount + 1))} className="text-muted-foreground hover:text-foreground transition-colors text-lg px-2">+</button>
+                    </div>
+                    <Button size="sm" onClick={handleBulkFill} disabled={remaining === 0} className="accent-gradient h-10 px-4 text-sm text-white font-semibold flex-1 sm:flex-none">
+                      ✨ توليد بالذكاء الاصطناعي
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Panel: scrollable list + count-fill */}
+                {/* Manual Suggestions Toggle */}
+                <Button variant="ghost" size="sm" onClick={() => setShowBulkPanel(!showBulkPanel)} className="w-full text-xs text-muted-foreground hover:text-primary mt-1 border border-transparent hover:border-primary/20 bg-background/40 hover:bg-background/80 transition-all">
+                  {showBulkPanel ? "▾ إخفاء القائمة اليدوية" : `▴ عرض القائمة اليدوية لاختيار الأسئلة (${remaining} متبقي متاح)`}
+                </Button>
+
+                {/* Panel: scrollable list manually picking */}
                 <AnimatePresence>
                   {showBulkPanel && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                      <div className="rounded-xl border border-primary/15 bg-primary/5 p-2 space-y-2">
+                      <div className="rounded-xl border border-primary/15 bg-background/80 p-2 space-y-2 mt-2">
                         {/* Header */}
                         <div className="flex items-center justify-between px-1">
                           <span className="text-[11px] text-muted-foreground">مرتبة حسب الصعوبة المطلوبة ({difficultyTarget}/10)</span>
@@ -327,7 +366,7 @@ export function QuestionCard({
                             sortedSuggestions(question.type).map((s, idx) => {
                               const { key, label } = difficultyMeta(s.difficulty);
                               return (
-                                <div key={idx} className="flex items-start gap-2 rounded-lg px-2 py-2 hover:bg-background/60 transition-colors group">
+                                <div key={idx} className="flex items-start gap-2 rounded-lg px-2 py-2 hover:bg-muted/50 transition-colors group">
                                   <span className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 font-inter text-[10px] font-bold ${DIFFICULTY_COLORS[key]}`}>{label}</span>
                                   <p className="flex-1 text-xs text-foreground leading-relaxed line-clamp-2" dir="rtl">{s.text}</p>
                                   {question.type === "mcq" && s.options && s.options.length > 0 && (
@@ -346,20 +385,6 @@ export function QuestionCard({
                               );
                             })
                           )}
-                        </div>
-
-                        {/* Count-based fill row */}
-                        <div className="flex items-center gap-2 border-t border-primary/10 pt-2 px-1">
-                          <span className="text-[11px] text-muted-foreground shrink-0">إضافة</span>
-                          <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-background/60 px-2 py-0.5">
-                            <button onClick={() => setBulkCount(Math.max(1, bulkCount - 1))} className="text-muted-foreground hover:text-foreground transition-colors text-sm px-1">−</button>
-                            <span className="font-inter text-sm font-bold text-foreground w-5 text-center">{bulkCount}</span>
-                            <button onClick={() => setBulkCount(Math.min(remaining, bulkCount + 1))} className="text-muted-foreground hover:text-foreground transition-colors text-sm px-1">+</button>
-                          </div>
-                          <span className="text-[11px] text-muted-foreground shrink-0">سؤال تلقائياً</span>
-                          <Button size="sm" onClick={handleBulkFill} disabled={remaining === 0} className="ms-auto h-7 px-3 text-xs bg-primary/20 text-primary hover:bg-primary/30 border-0">
-                            إضافة ✓
-                          </Button>
                         </div>
                       </div>
                     </motion.div>
@@ -391,13 +416,33 @@ export function QuestionCard({
 
                         {/* AI suggest button for this specific sub-question */}
                         {subPool.length > 0 && (
-                          <button
-                            onClick={() => toggleSubPicker(sub.id)}
-                            className={`ms-auto rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${subPickerOpen ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-primary hover:bg-primary/10"}`}
-                            title="اقتراح AI لهذا الفرع"
-                          >
-                            ✨ AI
-                          </button>
+                          <div className="ms-auto flex items-center gap-1 bg-background rounded-lg border border-border/50 p-0.5">
+                            <button
+                              onClick={() => cycleSubQuestion(sub.id, sub.contentText || "", 1)}
+                              className="rounded px-1.5 py-1 text-muted-foreground hover:bg-muted hover:text-primary transition-colors disabled:opacity-30"
+                              title="التبديل للاقتراح التالي"
+                              disabled={subPool.length === 0}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                            
+                            <button
+                              onClick={() => toggleSubPicker(sub.id)}
+                              className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${subPickerOpen ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary hover:bg-primary/10"} mx-0.5`}
+                              title="قائمة الاقتراحات"
+                            >
+                              ✨ AI
+                            </button>
+                            
+                            <button
+                              onClick={() => cycleSubQuestion(sub.id, sub.contentText || "", -1)}
+                              className="rounded px-1.5 py-1 text-muted-foreground hover:bg-muted hover:text-primary transition-colors disabled:opacity-30"
+                              title="التبديل للاقتراح السابق"
+                              disabled={subPool.length === 0}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
+                          </div>
                         )}
 
                         <button onClick={() => onRemoveSubQuestion(sub.id)} className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive transition-colors" title="حذف">

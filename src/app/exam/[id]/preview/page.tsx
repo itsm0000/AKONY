@@ -31,9 +31,11 @@ export default function PreviewPage() {
       // Dynamic import — only loaded when user clicks download
       const { pdf } = await import("@react-pdf/renderer");
       const { ExamPdfDocument } = await import("@/components/ExamPdfDocument");
+      const React = await import("react");
 
       const blob = await pdf(
-        ExamPdfDocument({ exam, version: previewVersion, showAnswerKey })
+        // @ts-ignore: React-pdf types don't perfectly match dynamic custom components
+        React.createElement(ExamPdfDocument, { exam, version: previewVersion, showAnswerKey })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -264,16 +266,12 @@ function ExamPreview({
                     </div>
                   )}
 
-                  {sub.type !== "mcq" && sub.type !== "drawing" && (
+                  {sub.type !== "mcq" && (
                     <div>
                       {Array.from({ length: q.answerSpaceLines ?? 0 }).map((_, li) => (
                         <div key={li} style={{ borderBottom: "1px dotted #ccc", height: 22, marginTop: 4 }} />
                       ))}
                     </div>
-                  )}
-
-                  {sub.type === "drawing" && (
-                    <div style={{ border: "1px solid #ddd", height: 100, marginTop: 6, borderRadius: 4 }} />
                   )}
                 </div>
               </div>

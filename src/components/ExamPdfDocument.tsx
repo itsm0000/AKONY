@@ -11,14 +11,14 @@ import { QUESTION_TYPE_LABELS } from "@/lib/types/exam";
 
 // Register Arabic font
 Font.register({
-  family: "IBM Plex Arabic",
+  family: "Amiri",
   fonts: [
     {
-      src: "https://fonts.gstatic.com/s/ibmplexsansarabic/v12/Qw3CZRtWPQCuHme67tEYUIx3Kh0PHR9N6bs61A.ttf",
+      src: "/fonts/amiri-regular.ttf",
       fontWeight: 400,
     },
     {
-      src: "https://fonts.gstatic.com/s/ibmplexsansarabic/v12/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6bs61C_dSQ.ttf",
+      src: "/fonts/amiri-bold.ttf",
       fontWeight: 700,
     },
   ],
@@ -27,7 +27,7 @@ Font.register({
 const styles = StyleSheet.create({
   page: {
     padding: 30,
-    fontFamily: "IBM Plex Arabic",
+    fontFamily: "Amiri",
     fontSize: 10,
     direction: "rtl",
     lineHeight: 1.5,
@@ -65,7 +65,6 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     alignItems: "center",
     marginBottom: 6,
-    gap: 6,
   },
   questionNumber: {
     fontSize: 12,
@@ -86,7 +85,6 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     marginBottom: 6,
     paddingRight: 16,
-    gap: 6,
   },
   subLabel: {
     fontSize: 10,
@@ -106,7 +104,6 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     marginTop: 3,
     paddingRight: 8,
-    gap: 6,
   },
   mcqLabel: {
     fontSize: 9,
@@ -155,7 +152,7 @@ function QuestionBlock({ question }: { question: Question }) {
         <Text style={styles.questionNumber}>
           السؤال {question.questionNumber}:
         </Text>
-        <Text style={styles.questionType}>
+        <Text style={[styles.questionType, { marginRight: 6 }]}>
           ({QUESTION_TYPE_LABELS[question.type]})
         </Text>
       </View>
@@ -175,7 +172,7 @@ function QuestionBlock({ question }: { question: Question }) {
 function SubQuestionBlock({ sub }: { sub: SubQuestion }) {
   return (
     <View style={styles.subQuestion}>
-      <Text style={styles.subLabel}>{sub.label})</Text>
+      <Text style={[styles.subLabel, { marginLeft: 6 }]}>{sub.label})</Text>
       <View style={styles.subContent}>
         <Text style={styles.contentText}>
           {sub.contentText || "___________________________"}
@@ -186,7 +183,7 @@ function SubQuestionBlock({ sub }: { sub: SubQuestion }) {
           <View>
             {sub.mcqOptions.map((opt) => (
               <View key={opt.id} style={styles.mcqOption}>
-                <Text style={styles.mcqLabel}>{opt.label})</Text>
+                <Text style={[styles.mcqLabel, { marginLeft: 6 }]}>{opt.label})</Text>
                 <Text style={styles.mcqText}>
                   {opt.text || "________________"}
                 </Text>
@@ -263,18 +260,18 @@ export function ExamPdfDocument({ exam, version, showAnswerKey = false }: ExamPd
           </Text>
           {version.questions.map((q) => (
             <View key={q.id} style={{ marginBottom: 12 }}>
-              <View style={{ flexDirection: "row-reverse", alignItems: "center", marginBottom: 6, gap: 6 }}>
+              <View style={{ flexDirection: "row-reverse", alignItems: "center", marginBottom: 6 }}>
                 <Text style={{ fontSize: 11, fontWeight: 700, color: "#111" }}>
                   السؤال {q.questionNumber}:
                 </Text>
-                <Text style={{ fontSize: 9, color: "#666" }}>
+                <Text style={{ fontSize: 9, color: "#666", marginRight: 6 }}>
                   ({QUESTION_TYPE_LABELS[q.type]})
                 </Text>
               </View>
 
               {q.subQuestions.map((sub) => (
-                <View key={sub.id} style={{ flexDirection: "row-reverse", gap: 6, paddingRight: 16, marginBottom: 4 }}>
-                  <Text style={{ fontSize: 10, fontWeight: 700, color: "#333", minWidth: 16 }}>
+                <View key={sub.id} style={{ flexDirection: "row-reverse", paddingRight: 16, marginBottom: 4 }}>
+                  <Text style={{ fontSize: 10, fontWeight: 700, color: "#333", minWidth: 16, marginLeft: 6 }}>
                     {sub.label})
                   </Text>
                   <Text style={{ fontSize: 10, color: "#222" }}>

@@ -124,6 +124,11 @@ graph TB
 - **PDF Preview & Export:** Correctly formatted RTL exam with question numbering
 - **Generative AI Prompt:** Gemini now DERIVES questions (comparisons from paired definitions, علل from cause-effect text, fresh numerical problems with changed numbers, drawing questions from circuit descriptions)
 - **Difficulty Spread:** Explicit rubric (1=recall → 10=synthesis) prevents clustering at 5
+- **Large PDF Chunked Caching:** The PDF is chunked into 8-page blocks and cached granularly in Supabase, preventing API payload limits.
+- **Improved Adding Workflow:** Explicit AI subquestion count selection and instant "Swap `< >`" mechanics right on the question lines.
+- **Strict Figure Bans:** Absolute negative constraints in Gemini Prompt prevent the generation of textbook-dependent figure references for pure text output.
+- **Bulletproof PDF Engine:** Swapped dynamic Google Fonts to a local Amiri TTF to permanently fix the "Unknown font format" crashes in `@react-pdf/renderer`.
+- **Navigation Fixes:** Resolved structure builder routing (e.g. fixing 404 from earlier step names).
 
 ---
 

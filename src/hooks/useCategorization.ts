@@ -40,87 +40,130 @@ export function useCategorization() {
       setError(null);
 
       try {
-        // 1. Check Supabase Cache
-        const { data: cached, error: dbError } = await supabase
-          .from("categorized_cache")
-          .select("categorized_data")
-          .eq("material_id", materialId)
-          .eq("start_page", startPage)
-          .eq("end_page", endPage)
-          .maybeSingle();
-
-        if (dbError) {
-          console.error("Supabase cache check error:", dbError);
+        const CHUNK_SIZE = 8;
+        const chunks: { start: number; end: number }[] = [];
+        for (let p = startPage; p <= endPage; p += CHUNK_SIZE) {
+          chunks.push({ start: p, end: Math.min(p + CHUNK_SIZE - 1, endPage) });
         }
 
-        if (cached && cached.categorized_data) {
-          console.log("Found categorization in Supabase cache!");
-          setCategorizedMaterial(cached.categorized_data as CategorizedData);
-          return; // Exit successfully, UI updating automatically
-        }
+        // 1. Check Supabase Cache for all chunks concurrently
+        const cachePromises = chunks.map((chunk) =>
+          supabase
+            .from("categorized_cache")
+            .select("categorized_data")
+            .eq("material_id", materialId)
+            .eq("start_page", chunk.start)
+            .eq("end_page", chunk.end)
+            .maybeSingle()
+        );
 
-        console.log("No cache found. Processing material with AI...");
+        const cacheResults = await Promise.all(cachePromises);
 
-        // 2. Fetch PDF from IDB
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const storedFile: any = await get(`exam-file-${examId}`);
-        if (!storedFile || !storedFile.dataUrl) {
-          throw new Error("لم يتم العثور على ملف الامتحان");
-        }
+        const cachedData: CategorizedData[] = [];
+        const missingChunks: { start: number; end: number }[] = [];
 
-        let images: string[] = [];
-        if (storedFile.type === "application/pdf") {
-          // 3. Extract Images from scoped PDF pages
-          images = await extractImagesFromPdfScope(
-            storedFile.dataUrl,
-            startPage,
-            endPage
-          );
-        } else {
-          // For images, we would ideally use OCR or vision APIs.
-          // For now, prompt the user that only PDFs are fully supported for AI extraction.
-          throw new Error(
-            "تحليل الذكاء الاصطناعي مدعوم لملفات PDF فقط حالياً."
-          );
-        }
-
-        if (!images || images.length === 0) {
-          throw new Error(
-            "لم يتم استخراج أي صور من صفحات الملف المحددة."
-          );
-        }
-
-        // 4. Send to /api/categorize
-        const res = await fetch("/api/categorize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ images }),
+        cacheResults.forEach((res, index) => {
+          if (res.error) {
+            console.error(`Cache check error for chunk ${index}:`, res.error);
+          }
+          if (res.data && res.data.categorized_data) {
+            cachedData.push(res.data.categorized_data as CategorizedData);
+          } else {
+            missingChunks.push(chunks[index]);
+          }
         });
 
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error || "فشل الاتصال بخدمة الذكاء الاصطناعي");
+        const newChunksData: CategorizedData[] = [];
+
+        if (missingChunks.length > 0) {
+          console.log(`Found ${missingChunks.length} uncached chunks. Processing with AI...`);
+
+          // 2. Fetch PDF from IDB once for missing chunks
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const storedFile: any = await get(`exam-file-${examId}`);
+          if (!storedFile || !storedFile.dataUrl) {
+            throw new Error("لم يتم العثور على ملف الامتحان");
+          }
+
+          if (storedFile.type !== "application/pdf") {
+            throw new Error("تحليل الذكاء الاصطناعي مدعوم لملفات PDF فقط حالياً.");
+          }
+
+          // 3. Process missing chunks sequentially to avoid API HTTP 429 errors
+          for (const chunk of missingChunks) {
+            console.log(`Processing chunk: pages ${chunk.start} to ${chunk.end}`);
+            
+            // Extract images for this chunk ONLY
+            const images = await extractImagesFromPdfScope(
+              storedFile.dataUrl,
+              chunk.start,
+              chunk.end
+            );
+
+            if (!images || images.length === 0) {
+              throw new Error(`لم يتم استخراج صور من الصفحات ${chunk.start}-${chunk.end}`);
+            }
+
+            // 4. Send to /api/categorize
+            const res = await fetch("/api/categorize", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ images }),
+            });
+
+            if (!res.ok) {
+              const errData = await res.json();
+              throw new Error(errData.error || "فشل الاتصال بخدمة الذكاء الاصطناعي");
+            }
+
+            const categorizedData: CategorizedData = await res.json();
+            newChunksData.push(categorizedData);
+
+            // 5. Save chunk to Supabase cache
+            const { error: insertError } = await supabase
+              .from("categorized_cache")
+              .insert({
+                material_id: materialId,
+                start_page: chunk.start,
+                end_page: chunk.end,
+                categorized_data: categorizedData,
+              });
+
+            if (insertError) {
+              console.error(`Failed to save chunk ${chunk.start}-${chunk.end} to cache`, insertError);
+            }
+          }
+        } else {
+          console.log("All chunks found in Supabase cache!");
         }
 
-        const categorizedData: CategorizedData = await res.json();
+        // 6. Merge all categorized data
+        const allData = [...cachedData, ...newChunksData];
+        
+        const mergedData: CategorizedData = {
+          definitions: [],
+          multipleChoice: [],
+          problemSolving: [],
+          comparisons: [],
+          justifications: [],
+          dependencies: [],
+          shortAnswers: [],
+          drawings: [],
+        };
 
-        // 5. Save to Supabase
-        const { error: insertError } = await supabase
-          .from("categorized_cache")
-          .insert({
-            material_id: materialId,
-            start_page: startPage,
-            end_page: endPage,
-            categorized_data: categorizedData,
-          });
-
-        if (insertError) {
-          // Only log insert errors since standard flow shouldn't drop
-          console.error("Failed to save to Supabase cache", insertError);
+        for (const data of allData) {
+          mergedData.definitions.push(...(data.definitions || []));
+          mergedData.multipleChoice.push(...(data.multipleChoice || []));
+          mergedData.problemSolving.push(...(data.problemSolving || []));
+          mergedData.comparisons.push(...(data.comparisons || []));
+          mergedData.justifications.push(...(data.justifications || []));
+          mergedData.dependencies.push(...(data.dependencies || []));
+          mergedData.shortAnswers.push(...(data.shortAnswers || []));
+          mergedData.drawings.push(...(data.drawings || []));
         }
 
-        // 6. Update Store
-        setCategorizedMaterial(categorizedData);
+        // 7. Update Store
+        setCategorizedMaterial(mergedData);
       } catch (err) {
         const msg =
           err instanceof Error
