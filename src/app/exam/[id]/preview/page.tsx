@@ -266,8 +266,9 @@ function ExamPreview({
 
                   {sub.type !== "mcq" && sub.type !== "drawing" && (
                     <div>
-                      <div style={{ borderBottom: "1px dotted #ccc", height: 20, marginTop: 4 }} />
-                      <div style={{ borderBottom: "1px dotted #ccc", height: 20 }} />
+                      {Array.from({ length: q.answerSpaceLines ?? 0 }).map((_, li) => (
+                        <div key={li} style={{ borderBottom: "1px dotted #ccc", height: 22, marginTop: 4 }} />
+                      ))}
                     </div>
                   )}
 

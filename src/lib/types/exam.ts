@@ -45,6 +45,8 @@ export interface Question {
   instructions?: string; // "Answer 5 out of 6"
   subQuestions: SubQuestion[];
   sortOrder: number;
+  mcqOptionsCount?: number;  // how many choices for MCQ questions (default 4)
+  answerSpaceLines?: number; // blank lines printed per sub-question (0 = auto)
 }
 
 // ─── Exam Version ─────────────────────────────────────

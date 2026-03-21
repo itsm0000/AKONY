@@ -8,6 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useExamStore } from "@/lib/stores/examStore";
+import { get } from "idb-keyval";
+
+/** SHA-256 a string and return the first 16 hex chars as a stable ID. */
+async function hashString(str: string): Promise<string> {
+  const encoder = new TextEncoder();
+  // Hash only the first ~80KB to keep it fast for large PDFs
+  const sample = str.slice(0, 80_000);
+  const data = encoder.encode(sample);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+}
 
 export default function ScopePage() {
   const router = useRouter();
@@ -21,9 +33,22 @@ export default function ScopePage() {
   const [chapters, setChapters] = useState("");
   const [title, setTitle] = useState("");
 
-  const handleProceed = useCallback(() => {
-    // Initialize the exam in the store
-    initExam(examId, title || "امتحان جديد");
+  const handleProceed = useCallback(async () => {
+    // Derive a stable content-based materialId from the stored PDF bytes
+    // so the Supabase categorization cache works across sessions.
+    let materialId = examId; // fallback
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const stored: any = await get(`exam-file-${examId}`);
+      if (stored?.dataUrl) {
+        materialId = await hashString(stored.dataUrl);
+      }
+    } catch {
+      // If IDB fails just use the examId — cache won't hit but won't crash
+      console.warn("Could not hash PDF for materialId, using examId as fallback.");
+    }
+
+    initExam(materialId, title || "امتحان جديد", examId);
     setScope({
       startPage,
       endPage,

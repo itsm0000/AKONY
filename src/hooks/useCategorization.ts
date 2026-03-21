@@ -9,6 +9,7 @@ export interface ExamQuestionSuggestion {
   difficulty: number;
   requiresIllustration: boolean;
   context: string;
+  options?: string[]; // MCQ choices only
 }
 
 export interface CategorizedData {

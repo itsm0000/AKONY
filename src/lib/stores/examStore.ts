@@ -16,7 +16,7 @@ interface ExamState {
   categorizedMaterial: CategorizedData | null;
 
   // Actions
-  initExam: (materialId: string, title: string) => void;
+  initExam: (materialId: string, title: string, examId?: string) => void;
   setScope: (scope: ExamScope) => void;
   setMetadata: (metadata: Partial<ExamMetadata>) => void;
   setCategorizedMaterial: (data: CategorizedData) => void;
@@ -55,10 +55,10 @@ export const useExamStore = create<ExamState>((set) => ({
   activeVersionId: null,
   categorizedMaterial: null,
 
-  initExam: (materialId, title) => {
+  initExam: (materialId, title, examId) => {
     const versionId = crypto.randomUUID();
     const exam: Exam = {
-      id: crypto.randomUUID(),
+      id: examId ?? crypto.randomUUID(),
       materialId,
       title,
       scope: { startPage: 1, endPage: 1 },

@@ -43,8 +43,12 @@ export async function POST(req: Request) {
               difficulty: { type: SchemaType.NUMBER },
               requiresIllustration: { type: SchemaType.BOOLEAN },
               context: { type: SchemaType.STRING },
+              options: {
+                type: SchemaType.ARRAY,
+                items: { type: SchemaType.STRING },
+              },
             },
-            required: ["text", "difficulty", "requiresIllustration", "context"]
+            required: ["text", "difficulty", "requiresIllustration", "context", "options"]
           }
         },
         problemSolving: {
@@ -128,25 +132,56 @@ export async function POST(req: Request) {
       }
     };
 
-    const prompt = `You are an expert Iraqi Baccalaureate exam analyzer. 
-Analyze the provided educational pages (which may contain text, scientific diagrams, and graphs) and extract all potential exam questions into these specific categories:
-1. "definitions" (تعاريف)
-2. "multipleChoice" (اختيارات - extract the question and options if available)
-3. "problemSolving" (مسائل حسابية / رياضية)
-4. "comparisons" (مقارنات / ما الفرق بين)
-5. "justifications" (علل / اذكر السبب)
-6. "dependencies" (علام يعتمد)
-7. "shortAnswers" (أجب باختصار / تعاليل / شرح)
-8. "drawings" (رسومات / مخططات - identify any illustrations or diagrams that could be asked to be drawn)
+    const prompt = `You are a veteran Iraqi Baccalaureate physics & electronics teacher with 20 years of experience setting final exams.
+You are analyzing educational textbook pages (images provided). Your job is NOT just to copy questions that appear word-for-word. Think like an experienced teacher and GENERATE every possible exam-worthy question this content can support.
 
-For each extracted question, return an object with the following schema:
-- "text": The extracted question text in Arabic
-- "difficulty": A number from 1 to 10 evaluating how hard this question is for a high school student
-- "requiresIllustration": true if answering this question requires drawing or if it's based on a visual diagram present in the page, false otherwise
-- "context": A very brief 1-5 word context on what this topic is about (e.g. 'الفصل الرابع - الفيزياء')
+GENERATION STRATEGY:
 
-VERY IMPORTANT FORMATTING RULE FOR NUMBERS AND MATH:
-When extracting mathematical formulas, numbers, equations, or scientific units (like Hz, m/s, 10^15), ensure they are perfectly written and logically ordered. Because Arabic is Right-to-Left (RTL) and English/Math is Left-to-Right (LTR), mixed text can easily break. To prevent this: ALWAYS wrap formulas or mixed LTR math inside standard English LTR formatting if necessary, or ensure numbers and units are correctly sequenced so they render legibly (e.g., instead of "Hz 15^10 * 0.85" it should clearly state "0.85 * 10^15 Hz"). Do not randomly shuffle math symbols!`;
+1. DEFINITIONS (definitions array)
+   - For EVERY bold term, highlighted concept, law, or principle: generate "عرّف [المصطلح] واذكر خصائصه / معادلته / وحدته".
+   - For each device or component described: generate "ما هو [X]؟ وما مكوناته؟".
+   - Do NOT limit yourself to terms with explicit definitions — if a concept is explained, derive a definition question from that explanation.
+
+2. MULTIPLE CHOICE (multipleChoice array)
+   - Generate MCQ questions for every fact, formula result, or conceptual claim.
+   - "text" = the question stem ONLY (no choices embedded in text).
+   - "options" = exactly 4 unique, distinct strings. MANDATORY: Before finalising, check that no two choices are the same word-for-word or near-identical. Each distractor must reflect a real misconception.
+   - For numerical formulas: create "what is the value of X?" with the correct answer and 3 wrong numerical distractors.
+
+3. PROBLEM SOLVING (problemSolving array)
+   - For every formula on the page: generate one numerical calculation problem.
+   - CHANGE the numbers from the textbook example (do not copy verbatim).
+   - Include multi-step problems that chain two formulas together (difficulty 7-8).
+
+4. COMPARISONS (comparisons array)
+   - Identify ALL pairs of related concepts visible in the content (e.g., NPN/PNP, n-type/p-type, Ic/Ib/Ie, common-base/common-emitter).
+   - For each pair: "قارن بين [X] و[Y] من حيث [الخاصية / السلوك / المعادلة]".
+   - ALSO derive comparisons from any two definitions on the same page even if not explicitly compared in the textbook.
+
+5. JUSTIFICATIONS (justifications array)
+   - For every cause-effect relationship, property, or physical behavior described: "علل: [الظاهرة أو الخاصية]".
+   - Examples: "علل: تيار الباعث Ie دائماً أكبر من تيار الجامع Ic", "لماذا يكون ربح التيار β أكبر من 1؟".
+
+6. DEPENDENCIES (dependencies array)
+   - For every quantity that depends on another: "علام يعتمد [X]؟ وكيف؟".
+
+7. SHORT ANSWERS (shortAnswers array)
+   - "اذكر" or "اشرح" questions for every list, property set, or multi-step process.
+   - Include "ما الذي يحدث عند تغيير [X]؟" questions for each variable in a formula.
+
+8. DRAWINGS (drawings array)
+   - For EVERY circuit diagram, graph, energy band diagram, characteristic curve, or device illustration visible in the pages: "ارسم [X] مع تسمية أجزائه".
+   - Also generate drawing questions for circuits described textually (e.g., "ارسم دائرة المضخم ذو الباعث المشترك").
+
+DIFFICULTY RUBRIC (use the FULL range — do NOT cluster at 5):
+  1-2 = single-term recall
+  3-4 = one-step formula or simple concept
+  5-6 = multi-concept or 2-3 step chain
+  7-8 = multi-step derivation under pressure
+  9-10 = cross-chapter synthesis or open-ended analysis
+
+MATH FORMATTING:
+Preserve LTR number order always. Correct: "0.85 × 10^15 Hz". Wrong: "Hz 15^10 × 0.85". Use × not *.`;
 
     // Map base64 images to Gemini's inlineData format
     const imageParts = images.map((dataUrl: string) => {
@@ -181,8 +216,9 @@ When extracting mathematical formulas, numbers, equations, or scientific units (
     console.log("Success! Categorized data generated.");
 
     return NextResponse.json(parsedData);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to categorize";
     console.error("API /categorize error:", error);
-    return NextResponse.json({ error: error.message || "Failed to categorize" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

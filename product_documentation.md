@@ -1,26 +1,33 @@
 # AKONY — Product Documentation
 
+> **Last Updated:** March 2026  
+> **Status:** Phase 3 complete — actively being polished
+
+---
+
 ## 1. Vision & Problem Statement
 
 ### The Problem
 Teachers in Iraq (and the Arab world) spend **hours** manually creating exams:
 - Flipping through textbooks, retyping questions by hand
-- Fighting with Word/Google Docs RTL formatting (Arabic text + English math = chaos)
+- Fighting Word/Google Docs RTL formatting (Arabic text + English math = chaos)
 - Creating multiple versions by copy-pasting and shuffling
 - No reusable question bank — every semester starts from scratch
 
 ### The Solution
-**AKONY** is an exam builder that lets teachers:
-1. **Upload** their curriculum PDF or textbook photos
-2. **Analyze** the document instantly with Google Gemini Vision AI
-3. **Structure** the exam skeleton using AI suggestions (categories, difficulty levels)
-4. **Edit** extracted equations, text, and modify MCQ options
-5. **Generate** perfectly formatted, RTL-correct exam documents in multiple versions
+**AKONY** is an AI-powered exam builder that lets teachers:
+1. **Upload** their curriculum PDF
+2. **Scope** the exam to a page range
+3. **Analyze** the document with Google Gemini Vision AI (generative extraction — not just copying)
+4. **Structure** the exam using AI suggestions (categories, difficulty levels) or quick-start templates
+5. **Edit** extracted content, MCQ options, difficulty, and answer space settings
+6. **Evaluate** the exam structure with AI feedback
+7. **Preview & Export** a perfectly formatted, RTL-correct PDF
 
 ### Target Users
 - **Primary:** Iraqi high school teachers (physics, math, chemistry)
 - **Secondary:** Arab world teachers using similar Arabic curriculum formats
-- **Future:** Any teacher worldwide who works with mixed-direction text
+- **Future:** Any teacher working with mixed-direction text
 
 ---
 
@@ -28,379 +35,240 @@ Teachers in Iraq (and the Arab world) spend **hours** manually creating exams:
 
 ```mermaid
 graph TB
-    subgraph "Frontend (Next.js 16)"
-        A[Landing/Upload] --> B[AI Analysis Pipeline]
+    subgraph "Frontend (Next.js 16 App Router)"
+        A[Landing / Upload] --> B[Scope Page]
         B --> C[Structure Builder]
-        C --> E[Content Editor]
-        E --> F[Preview & Export]
+        C --> D[Preview & Export]
     end
 
-    subgraph "Services"
-        G[Google Gemini 2.5 Flash]
-        H[BiDi Text Engine]
-        I[PDF Export Engine<br/>react-pdf/renderer]
+    subgraph "AI Layer"
+        G[Google Gemini 2.5 Flash<br/>Categorization + Evaluation]
     end
 
     subgraph "Backend (Supabase)"
-        J[(PostgreSQL / Cache)]
-        K[Auth]
-        L[Storage<br/>PDFs & Images]
+        J[(PostgreSQL<br/>categorized_cache table)]
+        K[Supabase Auth]
+        L[Supabase Storage<br/>PDFs & Images]
     end
 
-    B --> G
-    E --> H
-    F --> I
-    C --> J
+    subgraph "State"
+        Z[Zustand examStore]
+    end
+
+    B -- "PDF pages as images" --> G
+    G -- "Structured JSON" --> J
     B --> J
+    C --> Z
+    D --> Z
     A --> K
     A --> L
 ```
 
-### Why This Architecture?
+### Architecture Decisions
 
 | Decision | Choice | Reasoning |
 |----------|--------|-----------|
-| **Framework** | Next.js 16 (App Router) | SSR for fast loads, API routes, file-based routing, massive ecosystem |
-| **UI Library** | shadcn/ui + Tailwind | Free, customizable, accessible, RTL-friendly with CSS logical properties |
-| **PDF Converter**| PDF.js | Free, parses PDF pages to images for the Vision AI |
-| **Vision AI** | Google Gemini | Extremely fast multimodal categorization and smart extraction |
-| **Database** | Supabase (PostgreSQL) | Free tier, auth built-in, storage built-in, real-time |
-| **Export** | @react-pdf/renderer | Free, generates PDF in browser, full control over RTL layout |
-| **State** | Zustand | Lightweight, no boilerplate, supports undo/redo |
-| **Animations** | Framer Motion | Premium feel, smooth transitions, gesture support |
-| **Hosting** | Vercel | Free tier, auto-deploys from Git, global CDN |
+| **Framework** | Next.js 16 (App Router) | SSR, API routes, file-based routing |
+| **UI Library** | shadcn/ui + Tailwind CSS | Free, accessible, RTL-friendly |
+| **Vision AI** | Google Gemini 2.5 Flash | Best Arabic multimodal model — free tier |
+| **Database** | Supabase (PostgreSQL) | Free tier, auth built-in, real-time |
+| **PDF Parsing** | PDF.js → images → Gemini | Pages rendered as images for Vision AI |
+| **Export** | @react-pdf/renderer | In-browser RTL PDF generation |
+| **State** | Zustand | Lightweight, no boilerplate |
+| **Animations** | Framer Motion | Premium feel, smooth transitions |
+| **Caching** | Supabase `categorized_cache` | SHA-256 hash of PDF content = stable cache key |
 
 ---
 
-## 3. Tech Stack (100% Free)
+## 3. Tech Stack (100% Free Tier)
 
-### Core
-
-| Layer | Technology | Cost | Purpose |
-|-------|-----------|------|---------|
-| Framework | Next.js 14 | Free | Full-stack React framework |
-| Language | TypeScript | Free | Type safety |
-| Styling | Tailwind CSS + shadcn/ui | Free | Utility-first CSS + component library |
-| Animations | Framer Motion | Free | Smooth UI transitions |
-| State | Zustand | Free | Client-side state management |
-
-### AI & Processing
-
-| Technology | Cost | Purpose |
-|-----------|------|---------|
-| Tesseract.js | Free | In-browser OCR (Arabic + English) |
-| PDF.js | Free | PDF rendering in browser |
-| Fabric.js | Free | Canvas drawing/annotation |
-| Google Cloud Vision API | Free (1K/mo) | Optional: Higher-quality OCR |
-| Gemini API | Free tier | Optional: AI question suggestions |
-
-### Backend & Infrastructure
-
-| Technology | Cost | Purpose |
-|-----------|------|---------|
-| Supabase | Free tier | Auth, DB, Storage |
-| Vercel | Free tier | Hosting + CI/CD |
-| PostgreSQL (via Supabase) | Free | Relational database |
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Framework | Next.js 16 | Full-stack React |
+| Language | TypeScript | Type safety |
+| Styling | Tailwind CSS + shadcn/ui | Utility CSS + components |
+| Animations | Framer Motion | Micro-interactions |
+| State | Zustand | Client-side state |
+| Vision AI | Google Gemini 2.5 Flash | Question categorization & evaluation |
+| PDF Parsing | PDF.js | PDF → page images |
+| Database | Supabase PostgreSQL | Cache + auth + storage |
+| Hosting | Vercel | Free tier, auto-deploys |
 
 ---
 
-## 4. User Workflow (Step by Step)
+## 4. Implemented Features (Current State)
 
-### Step 1: Upload Material
-```
-┌─────────────────────────────────┐
-│                                 │
-│   📄 Upload your curriculum     │
-│                                 │
-│   ┌─────────────────────────┐   │
-│   │                         │   │
-│   │   Drag PDF or images    │   │
-│   │   here                  │   │
-│   │                         │   │
-│   └─────────────────────────┘   │
-│                                 │
-│   Supported: PDF, JPG, PNG      │
-│                                 │
-└─────────────────────────────────┘
-```
+### ✅ Phase 1 — Core Flow
+- PDF upload → page range selection → scope declaration
+- Gemini Vision AI analysis of page images into 8 question categories
+- SHA-256 content hashing for stable cache keys (same PDF = instant on repeat)
+- Supabase caching (first analysis stores result, subsequent loads are instant)
+- Exam structure builder: add questions, sub-questions, assign types
 
-### Step 2: Declare Scope
-- Teacher selects page range (e.g., pages 74–92)
-- Or types chapter range (e.g., "Chapter 4: Torque and Equilibrium")
-- App crops the material to only show relevant pages
+### ✅ Phase 2 — Smart Builder
+- AI categorization into 8 types: definitions, MCQ, problem solving, comparisons, justifications, dependencies, short answers, drawings
+- Scrollable suggestion panel per question card, sorted by proximity to difficulty target
+- MCQ auto-fill: choices correctly mapped into `McqOption[]` format
+- Per-sub-question AI suggestion picker (✨ AI button on each row)
+- Deduplication: added suggestions disappear from the suggestion list
+- Count-based bulk fill: choose N suggestions to add at once
+- Inline MCQ option editing with correct-answer indicator
+- RTL math formatting enforcement in AI prompts
 
-### Step 3: Build Exam Skeleton
-```
-┌──────────────────────────────────────┐
-│ Exam Structure                       │
-│                                      │
-│ [Version A ▼] [Version B] [+ Add]   │
-│                                      │
-│ ┌──────────────────────────────────┐ │
-│ │ Q1: Problem/Calculation      [⋮] │ │
-│ │   (no sub-questions)              │ │
-│ └──────────────────────────────────┘ │
-│ ┌──────────────────────────────────┐ │
-│ │ Q2: Problem/Calculation      [⋮] │ │
-│ │   (no sub-questions)              │ │
-│ └──────────────────────────────────┘ │
-│ ┌──────────────────────────────────┐ │
-│ │ Q3: Definitions              [⋮] │ │
-│ │   ├─ (a) Short Answer            │ │
-│ │   └─ (b) Short Answer            │ │
-│ └──────────────────────────────────┘ │
-│ ┌──────────────────────────────────┐ │
-│ │ Q4: Multiple Choice          [⋮] │ │
-│ │   ├─ (1) MCQ                     │ │
-│ │   ├─ (2) MCQ                     │ │
-│ │   ├─ (3) MCQ                     │ │
-│ │   └─ (4) MCQ                     │ │
-│ └──────────────────────────────────┘ │
-│                                      │
-│ [+ Add Question]                     │
-│                                      │
-└──────────────────────────────────────┘
-```
-
-### Step 4: AI Context Analysis
-- PDF is converted to images and sent securely to Google Gemini
-- Gemini classifies questions (difficulty 1-10, type, context)
-- Results are cached in Supabase to avoid redundant AI processing
-
-### Step 5: Edit Extracted Content
-- AI auto-fills the chosen exam structure
-- Teacher reviews suggested questions and difficulty ratings
-- Modifies values for different versions (e.g., change 20N → 60N)
-- Manually adjusts text for generated MCQ or Problem constraints
-
-### Step 6: Preview & Export
-- Live preview of the complete exam
-- Export as PDF with correct RTL formatting
-- Download answer key (separate file)
+### ✅ Phase 3 — Polish & Evaluation
+- **Quick-Start Templates:** Monthly quiz, Midterm, Ministerial exam templates pre-populate the structure
+- **Global Difficulty Slider:** 1–10 target difficulty reorders AI suggestions in real time
+- **AI Exam Evaluation:** `/api/evaluate` endpoint reviews the full exam structure and returns Arabic feedback in a modal
+- **MCQ Options Count:** Per-question control (2–6 choices, default 4)
+- **Answer Space Lines:** Per-question control (0–15 blank lines printed, default 0 — students use separate notebooks in Iraq)
+- **PDF Preview & Export:** Correctly formatted RTL exam with question numbering
+- **Generative AI Prompt:** Gemini now DERIVES questions (comparisons from paired definitions, علل from cause-effect text, fresh numerical problems with changed numbers, drawing questions from circuit descriptions)
+- **Difficulty Spread:** Explicit rubric (1=recall → 10=synthesis) prevents clustering at 5
 
 ---
 
-## 5. Database Schema
+## 5. Current Database Schema
 
+### `categorized_cache` (only active table in Supabase)
 ```sql
--- Users (handled by Supabase Auth)
-
-CREATE TABLE materials (
+CREATE TABLE categorized_cache (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id),
-  title TEXT NOT NULL,
-  file_url TEXT NOT NULL,
-  file_type TEXT NOT NULL, -- 'pdf' or 'image'
-  page_count INTEGER,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE exams (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id),
-  material_id UUID REFERENCES materials(id),
-  title TEXT NOT NULL,
-  scope_start_page INTEGER,
-  scope_end_page INTEGER,
-  scope_chapters TEXT,
+  material_id TEXT NOT NULL,   -- SHA-256 hash of first 80KB of PDF content
+  start_page INTEGER NOT NULL,
+  end_page INTEGER NOT NULL,
+  data JSONB NOT NULL,         -- Full categorized output from Gemini
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  UNIQUE (material_id, start_page, end_page)
 );
+```
 
-CREATE TABLE exam_versions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
-  label TEXT NOT NULL, -- 'A', 'B', 'C'
-  sort_order INTEGER DEFAULT 0
-);
+> **Note:** The `exams`, `questions`, `sub_questions`, `mcq_options`, `annotations` tables are planned but not yet migrated to Supabase. All exam state is currently managed client-side via Zustand and not persisted between sessions.
 
-CREATE TABLE questions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  version_id UUID REFERENCES exam_versions(id) ON DELETE CASCADE,
-  question_number INTEGER NOT NULL,
-  question_type TEXT NOT NULL,
-  -- Types: 'problem', 'definition', 'comparison',
-  --        'drawing', 'mcq', 'short_answer'
-  instructions TEXT, -- e.g., "Answer 5 out of 6"
-  sort_order INTEGER DEFAULT 0
-);
+---
 
-CREATE TABLE sub_questions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
-  label TEXT NOT NULL, -- 'a', 'b', 'c' or '1', '2', '3'
-  sub_type TEXT NOT NULL,
-  content_text TEXT, -- The actual question text
-  source_page INTEGER, -- Which page it was marked from
-  source_region JSONB, -- Fabric.js coords of the marked region
-  sort_order INTEGER DEFAULT 0
-);
+## 6. API Endpoints
 
-CREATE TABLE mcq_options (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  sub_question_id UUID REFERENCES sub_questions(id) ON DELETE CASCADE,
-  label TEXT NOT NULL, -- 'A', 'B', 'C', 'D'
-  option_text TEXT NOT NULL,
-  is_correct BOOLEAN DEFAULT FALSE,
-  sort_order INTEGER DEFAULT 0
-);
+### `POST /api/categorize`
+- **Input:** `{ images: string[] }` — array of base64 data URLs (one per PDF page)
+- **Output:** Structured JSON with 8 question-type arrays, each item has `{ text, difficulty, requiresIllustration, context, options? }`
+- **Caching:** Caller checks Supabase cache before calling; result is written back to cache after AI response
 
-CREATE TABLE annotations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
-  page_number INTEGER NOT NULL,
-  fabric_data JSONB NOT NULL, -- Fabric.js serialized canvas
-  assigned_to UUID, -- sub_question_id
-  ocr_text TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+### `POST /api/evaluate`
+- **Input:** `{ exam: ExamVersion }` — full exam structure
+- **Output:** `{ feedback: string }` — Arabic-language AI feedback on balance, difficulty, and suggestions
+- **Model:** Gemini 2.5 Flash
+
+---
+
+## 7. User Workflow (Current)
+
+```
+1. Upload PDF
+2. Select page range (scope)
+   └─ SHA-256 hash computed from PDF content → stable materialId
+3. Gemini analyzes pages (or instant cache hit)
+4. Structure page:
+   ├─ Choose template OR build manually
+   ├─ Global difficulty slider (1–10)
+   ├─ Add question cards (type, instructions, MCQ count, answer space)
+   ├─ Pick from AI suggestion panel (scroll + individual add OR bulk count-add)
+   ├─ Per-sub-question AI picker for precise control
+   └─ Evaluate exam structure (AI modal feedback)
+5. Preview → Export PDF
 ```
 
 ---
 
-## 6. Key Design Decisions
+## 8. Known Issues & Needs Improvement
 
-### RTL-First Design
-- All CSS uses **logical properties** (`margin-inline-start` not `margin-left`)
-- HTML `dir="rtl"` on root element
-- Typography: **IBM Plex Arabic** (body) + **Inter** (UI labels/numbers)
-- BiDi text engine isolates English math from Arabic text using Unicode directional markers
-
-### Premium UI/UX
-- **Dark mode default** with light mode toggle
-- **Glassmorphism** cards with backdrop blur
-- **Framer Motion** animations for page transitions and drag-and-drop
-- **Micro-interactions:** Satisfying snap when assigning regions, progress indicators
-- **Arabic-first typography** with proper line heights for Arabic text (1.8 vs 1.5 for English)
-
-### Offline-Capable (MVP Stretch)
-- Zustand state persisted to `localStorage`
-- PDF.js and Tesseract.js run entirely in-browser
-- Export works without internet
-- Supabase sync only needed for save/load/share
+| Area | Issue | Priority |
+|------|-------|----------|
+| **Categorization at scale** | Current approach sends ALL pages in one Gemini call — breaks at ~50+ pages | 🔴 High |
+| **Exam persistence** | Exam state is lost on page refresh (Zustand not persisted to DB yet) | 🔴 High |
+| **MCQ duplicate choices** | Gemini occasionally generates near-identical MCQ options despite prompt instruction | 🟡 Medium |
+| **Difficulty scoring consistency** | AI-rated difficulties still cluster despite explicit rubric (prompt improvement may help) | 🟡 Medium |
+| **Drag-and-drop reordering** | Questions can't be reordered by dragging within the structure builder | 🟡 Medium |
+| **Answer key generation** | No separate answer key is exported | 🟡 Medium |
+| **Exam header customization** | School name, date, grade are not yet configurable on the preview | 🟡 Medium |
+| **Multiple exam versions** | Version B/C support exists in types but isn't yet wired to the UI | 🟡 Medium |
+| **No login/auth UI** | Supabase Auth is configured but there's no sign-in flow | 🔵 Low |
+| **Mobile responsiveness** | Not optimized for mobile screens | 🔵 Low |
 
 ---
 
-## 7. MVP Features Checklist
+## 9. Suggested Features (Next Development Sessions)
 
-| # | Feature | Priority | Complexity |
-|---|---------|----------|------------|
-| 1 | PDF upload + page thumbnails | Must Have | Medium |
-| 2 | Page range scope selector | Must Have | Low |
-| 3 | Exam structure builder (add Q, sub-Q, types) | Must Have | High |
-| 4 | Version tabs (A, B, C...) | Must Have | Medium |
-| 5 | Google Gemini AI Integration for content extraction | Must Have | High |
-| 6 | Supabase AI Caching system | Must Have | High |
-| 7 | Smart Builder (Auto-fill matching difficulty) | Must Have | Medium |
-| 8 | Content editing + AI evaluation | Must Have | Medium |
-| 9 | Live exam preview (compact styling) | Must Have | Medium |
-| 10 | PDF export with strict RTL math enforcement | Must Have | High |
-| 11 | Dark/light mode | Nice to Have | Low |
-| 12 | Exam header customization | Nice to Have | Low |
-| 13 | Answer key generation | Nice to Have | Medium |
-| 14 | Image upload (not just PDF) | Nice to Have | Medium |
+### High Priority (Core Robustness)
 
----
+#### 🏗 Chunked Caching for Large PDFs
+Split any page range into ~8-page chunks. Each chunk is cached independently.
+- `categorized_cache` key becomes `(material_id, chunk_start, chunk_end)` (already unique constraint compatible)
+- On re-analysis: cached chunks load instantly, only new chunks call Gemini
+- 280 pages → 35 chunks → ~3 min first run, instant on repeat
+- Handles textbooks without hitting Gemini per-request limits
 
-## 8. Development Roadmap
+#### 💾 Exam Persistence to Supabase
+Save exam structure to DB so it survives page refresh / return visits.
+- `exams` + `questions` + `sub_questions` + `mcq_options` tables
+- Auto-save on structure changes (debounced)
+- Load exam by `examId` from URL
 
-### Sprint 1 (Week 1–2): Foundation
-- [x] Project scaffolding (Next.js, Tailwind, shadcn/ui, Supabase)
-- [x] Landing page with upload zone
-- [x] PDF processing pipeline (upload → thumbnail generation → storage)
-- [x] Scope declaration screen
+#### 📋 Multiple Exam Versions (A/B/C)
+- Version cloning from the structure builder
+- Per-version question shuffling and number substitution
 
-### Sprint 2 (Week 3–4): Structure Builder
-- [x] Exam Structure Builder component (questions, types, sub-questions)
-- [x] Version management (tabs, cloning)
-- [ ] Drag-and-drop reordering
-- [x] Exam data persistence (Zustand)
-- [ ] Supabase persistence
+### Medium Priority (UX Polish)
 
-### Sprint 3 (Week 5–6): PDF Annotation
-- [x] PDF.js viewer integration
-- [x] Fabric.js overlay canvas
-- [x] Drawing tools (circle, rectangle, freehand)
-- [x] Region-to-question assignment flow
-- [x] Assignment sidebar
+- **Drag-and-drop reordering** of questions and sub-questions (Framer Motion drag already imported)
+- **Exam header editor:** School name, date, class, teacher name fields
+- **Answer key PDF:** Separate export with answers shown per sub-question
+- **MCQ post-processing dedup:** Server-side check after Gemini response to remove near-identical choices before caching
+- **Manual annotation mode:** Let teacher highlight a region on the PDF and assign it to a question slot directly
 
-### Sprint 4 (Week 7–8): Extraction & Export
-- [x] Tesseract.js integration for OCR
-- [x] Content editing interface
-- [x] MCQ options editor
-- [x] BiDi text engine
-- [x] PDF export with @react-pdf/renderer
-- [x] Live preview
+### Lower Priority / Future
 
-### Sprint 5 (Week 9–10): Polish & Launch
-- [  ] Dark/light mode
-- [  ] Responsive design (mobile-friendly)
-- [  ] Exam header customization
-- [  ] Answer key generation
-- [  ] Performance optimization
-- [  ] Deploy to Vercel
+- Multi-model parallel AI agents (Groq/Llama + Gemini) for large PDFs — viable once on a paid API key
+- Image upload support (not just PDF)
+- Student-facing exam delivery mode (online exam with timer)
+- Question bank (save extracted questions across multiple PDFs)
+- Share exam link with other teachers
 
 ---
 
-## 9. File Structure (MVP)
+## 10. File Structure (Current)
 
 ```
 AKONY/
-├── app/
-│   ├── layout.tsx                    # Root layout (RTL, fonts, theme)
-│   ├── page.tsx                      # Landing page + upload
-│   ├── globals.css                   # Global styles + design tokens
-│   ├── exam/
-│   │   └── [id]/
-│   │       ├── scope/page.tsx        # Scope declaration
-│   │       ├── structure/page.tsx    # Exam structure builder
-│   │       ├── mark/page.tsx         # PDF annotation
-│   │       ├── edit/page.tsx         # Content editing
-│   │       └── preview/page.tsx      # Preview & export
-│   ├── api/
-│   │   ├── upload/route.ts           # PDF upload endpoint
-│   │   └── export/route.ts           # Server-side PDF generation
-│   └── components/
-│       ├── ui/                       # shadcn/ui components
-│       ├── UploadZone.tsx
-│       ├── PdfThumbnailStrip.tsx
-│       ├── PageRangeSelector.tsx
-│       ├── ExamStructureBuilder.tsx
-│       ├── QuestionCard.tsx
-│       ├── SubQuestionRow.tsx
-│       ├── VersionTabs.tsx
-│       ├── PdfAnnotationViewer.tsx
-│       ├── AnnotationToolbar.tsx
-│       ├── RegionAssigner.tsx
-│       ├── AssignmentSidebar.tsx
-│       ├── ExtractedContentEditor.tsx
-│       ├── McqOptionsEditor.tsx
-│       ├── QuestionPreview.tsx
-│       ├── ExamPreview.tsx
-│       └── ExamHeader.tsx
-├── lib/
-│   ├── types/
-│   │   └── exam.ts                   # TypeScript types
-│   ├── stores/
-│   │   ├── examStore.ts              # Zustand exam state
-│   │   └── annotationStore.ts        # Zustand annotation state
-│   ├── services/
-│   │   ├── ocrService.ts             # Tesseract.js wrapper
-│   │   ├── examGenerator.ts          # Exam assembly logic
-│   │   ├── pdfExporter.ts            # PDF generation
-│   │   └── bidiTextEngine.ts         # Arabic/English BiDi handling
+├── src/
+│   ├── app/
+│   │   ├── page.tsx                      # Landing page + upload
+│   │   ├── globals.css
+│   │   ├── exam/[id]/
+│   │   │   ├── scope/page.tsx            # PDF upload + page range + hashing
+│   │   │   ├── structure/page.tsx        # Exam builder (templates, slider, evaluate)
+│   │   │   └── preview/page.tsx          # RTL PDF preview + export
+│   │   └── api/
+│   │       ├── categorize/route.ts       # Gemini vision categorization
+│   │       └── evaluate/route.ts         # Gemini exam evaluation
+│   ├── components/
+│   │   ├── ui/                           # shadcn/ui base components
+│   │   └── QuestionCard.tsx              # Full question card (suggestions, MCQ, sub-Qs)
 │   ├── hooks/
-│   │   ├── usePdfRenderer.ts         # PDF.js hook
-│   │   └── useFabricCanvas.ts        # Fabric.js hook
-│   └── supabase/
-│       ├── client.ts                 # Browser client
-│       ├── server.ts                 # Server client
-│       ├── schema.sql                # Database schema
-│       └── queries.ts                # Data access functions
-├── public/
-│   └── fonts/                        # IBM Plex Arabic + Inter
-├── tailwind.config.ts
-├── next.config.mjs
+│   │   └── useCategorization.ts          # AI analysis + Supabase cache logic
+│   └── lib/
+│       ├── types/exam.ts                 # All TypeScript types
+│       ├── stores/examStore.ts            # Zustand state (exam, material, cache)
+│       └── utils/pdfTextExtractor.ts     # PDF.js wrapper
+├── product_documentation.md             # This file
 ├── package.json
 └── tsconfig.json
 ```
+
+---
+
+## 11. Design Principles
+
+- **RTL-First:** All CSS uses logical properties (`margin-inline-start`, `padding-block`). Arabic text rendered at 1.8 line-height.
+- **Dark mode default** with glassmorphism card style and Framer Motion transitions
+- **Arabic-first:** UI labels and AI prompts are in Arabic. Numbers/math are LTR-isolated.
+- **Offline-tolerant:** Core exam building works without internet; Supabase only needed for AI caching and future persistence.
