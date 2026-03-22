@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { get } from "idb-keyval";
 import { createClient } from "@/lib/supabase/client";
 import { useExamStore } from "@/lib/stores/examStore";
+import type { SelectedChapter } from "@/lib/types/exam";
 import { extractImagesFromPdfScope } from "@/lib/utils/pdfTextExtractor";
 
 export interface ExamQuestionSuggestion {
@@ -34,16 +35,37 @@ export function useCategorization() {
       examId: string,
       materialId: string,
       startPage: number,
-      endPage: number
+      endPage: number,
+      selectedChapters?: SelectedChapter[]
     ) => {
       setIsProcessing(true);
       setError(null);
 
       try {
-        const CHUNK_SIZE = 8;
-        const chunks: { start: number; end: number }[] = [];
-        for (let p = startPage; p <= endPage; p += CHUNK_SIZE) {
-          chunks.push({ start: p, end: Math.min(p + CHUNK_SIZE - 1, endPage) });
+        const CHUNK_SIZE = 25; // Increased from 10 to vastly reduce total requests (helps avoid 15 RPM free-tier limit)
+        const chunks: { start: number; end: number; title?: string }[] = [];
+        
+        if (selectedChapters && selectedChapters.length > 0) {
+          // Chapter-based Hybrid Chunking
+          for (const chapter of selectedChapters) {
+            let currentStart = chapter.startPage;
+            if (currentStart > chapter.endPage) continue;
+            
+            while (currentStart <= chapter.endPage) {
+               const currentEnd = Math.min(currentStart + CHUNK_SIZE - 1, chapter.endPage);
+               chunks.push({ 
+                 start: currentStart, 
+                 end: currentEnd, 
+                 title: chapter.title 
+               });
+               currentStart = currentEnd + 1;
+            }
+          }
+        } else {
+          // Fallback manual page chunking
+          for (let p = startPage; p <= endPage; p += CHUNK_SIZE) {
+            chunks.push({ start: p, end: Math.min(p + CHUNK_SIZE - 1, endPage) });
+          }
         }
 
         // 1. Check Supabase Cache for all chunks concurrently
@@ -60,7 +82,7 @@ export function useCategorization() {
         const cacheResults = await Promise.all(cachePromises);
 
         const cachedData: CategorizedData[] = [];
-        const missingChunks: { start: number; end: number }[] = [];
+        const missingChunks: { start: number; end: number; title?: string }[] = [];
 
         cacheResults.forEach((res, index) => {
           if (res.error) {
@@ -91,7 +113,8 @@ export function useCategorization() {
 
           // 3. Process missing chunks sequentially to avoid API HTTP 429 errors
           for (const chunk of missingChunks) {
-            console.log(`Processing chunk: pages ${chunk.start} to ${chunk.end}`);
+            const chunkLabel = chunk.title ? `Chapter ${chunk.title} [ps. ${chunk.start}-${chunk.end}]` : `pages ${chunk.start} to ${chunk.end}`;
+            console.log(`Processing chunk: ${chunkLabel}`);
             
             // Extract images for this chunk ONLY
             const images = await extractImagesFromPdfScope(
@@ -104,19 +127,48 @@ export function useCategorization() {
               throw new Error(`لم يتم استخراج صور من الصفحات ${chunk.start}-${chunk.end}`);
             }
 
-            // 4. Send to /api/categorize
-            const res = await fetch("/api/categorize", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ images }),
-            });
+            // 4. Send to /api/categorize (with Rate Limit Retry Logic)
+            let res: Response | null = null;
+            let categorizedData: CategorizedData | null = null;
+            let success = false;
+            
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              res = await fetch("/api/categorize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ images }),
+              });
 
-            if (!res.ok) {
-              const errData = await res.json();
-              throw new Error(errData.error || "فشل الاتصال بخدمة الذكاء الاصطناعي");
+              if (res.ok) {
+                categorizedData = await res.json();
+                success = true;
+                break;
+              }
+
+              if (res.status === 429) {
+                // Try to extract dynamic delay from backend error message (e.g. "retry in 52.031s")
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData?.error || "";
+                
+                let sleepDuration = 60000; // Default 60s
+                const match = errMsg.match(/retry in ([\d\.]+)s/i);
+                if (match && match[1]) {
+                  // Wait the required amount + 3s buffer
+                  sleepDuration = (parseFloat(match[1]) + 3) * 1000;
+                }
+
+                console.warn(`[Attempt ${attempt}] Rate limit hit. Waiting ${Math.round(sleepDuration/1000)}s before retry...`);
+                await new Promise((resolve) => setTimeout(resolve, sleepDuration));
+              } else {
+                const errData = await res.json();
+                throw new Error(errData.error || "فشل الاتصال بخدمة الذكاء الاصطناعي");
+              }
             }
 
-            const categorizedData: CategorizedData = await res.json();
+            if (!success || !categorizedData) {
+              throw new Error("فشل الذكاء الاصطناعي في الاستجابة بعد عدة محاولات (يرجى المحاولة لاحقاً)");
+            }
+
             newChunksData.push(categorizedData);
 
             // 5. Save chunk to Supabase cache

@@ -58,10 +58,18 @@ export interface ExamVersion {
 }
 
 // ─── Exam Scope ───────────────────────────────────────
+export interface SelectedChapter {
+  id: string;
+  title: string;
+  startPage: number;
+  endPage: number;
+}
+
 export interface ExamScope {
   startPage: number;
   endPage: number;
-  chapters?: string;
+  chapters?: string; // legacy string
+  selectedChapters?: SelectedChapter[];
 }
 
 // ─── Exam Metadata ────────────────────────────────────

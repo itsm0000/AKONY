@@ -79,7 +79,7 @@ export default function StructurePage() {
   useEffect(() => {
     if (exam && !categorizedMaterial && !initRef.current) {
       initRef.current = true;
-      runCategorization(examId, exam.materialId, exam.scope.startPage, exam.scope.endPage);
+      runCategorization(examId, exam.materialId, exam.scope.startPage, exam.scope.endPage, exam.scope.selectedChapters);
     }
   }, [exam, categorizedMaterial, runCategorization, examId]);
 

@@ -231,6 +231,12 @@ Preserve LTR number order always. Correct: "0.85 × 10^15 Hz". Wrong: "Hz 15^10 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to categorize";
     console.error("API /categorize error:", error);
+    
+    // Propagate 429 Too Many Requests status to the frontend
+    if (message.includes("429") || message.includes("quota") || message.includes("Too Many Requests")) {
+      return NextResponse.json({ error: message }, { status: 429 });
+    }
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

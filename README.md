@@ -260,14 +260,23 @@ const useExamStore = create<ExamStore>((set) => ({
 | Sprint 2 | Structure Builder (versions, questions, sub-questions) | ✅ Done |
 | Sprint 3 | PDF Annotation (PDF.js, Fabric.js, drawing tools, assignment) | ✅ Done |
 | Sprint 4 | Content Editing & Export (OCR, MCQ editor, PDF export) | ✅ Done |
+| Sprint 5 | AI Chapter Bounds & Rate Limiting (Gemini API handling) | ✅ Done |
+
+### 🔥 Recent Enhancements
+- **Premium Chapter Select UI**: Upgraded the manual chapter slider into a grid of interactive glassmorphism cards. Features dynamic scale transformations, active gradient styling, and custom hover states. The fractional slider was moved to a cleanly segregated "Manual Input" fallback.
+- **Gemini 429 Rate Limit Handlers**: Upgraded API routes and frontend hooks to dynamically parse Google Gemini `429 Too Many Requests` error delays (e.g., `retry in 52.031s`). The system now natively pauses map-reduce loops to weather quota limits and strictly resumes without dropping chunks.
+- **Cache Intercepts**: Prevented the UI from aggressively pinging Gemini by natively intercepting Chapter Extractions using IndexedDB lookaheads.
+
+### ⚠️ Known Issues / Needs Fixing (WIP)
+- **Fast-Path TOC Extraction (Vision AI Blindspots)**: The AI is struggling to aggressively pull Table of Contents structures from the first/last 15 pages of scanned PDFs. Despite attaching physical `[--- PDF Physical Page X ---]` text markers, the model occasionally hallucinates `[]` (empty arrays) when processing 30-image payloads simultaneously. Additionally, executing this endpoint immediately after heavy processing hits the Free Tier 15 RPM limit, causing a mandatory 60-second browser freeze. **Action Item**: Rethink the 30-image vision strategy or switch to a lightweight specialized OCR step rather than full Gemini Multimodal analysis.
 
 ### 🔜 Upcoming
 
 | Sprint | Focus | Status |
 |--------|-------|--------|
-| Sprint 5 | Polish & Launch (responsive design, deploy to Vercel) | 📋 Planned |
-| Sprint 6 | Cloud Features (Supabase auth, exam persistence) | 📋 Planned |
-| Sprint 7 | Collaboration (sharing, templates marketplace) | 📋 Planned |
+| Sprint 6 | Polish & Launch (responsive design, deploy to Vercel) | 📋 Planned |
+| Sprint 7 | Cloud Features (Supabase auth, exam persistence) | 📋 Planned |
+| Sprint 8 | Collaboration (sharing, templates marketplace) | 📋 Planned |
 
 ### Sprint 5 Tasks
 
