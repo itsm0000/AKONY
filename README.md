@@ -17,13 +17,12 @@
 
 ## 🎯 What is AKONY?
 
-AKONY is a **free, browser-based exam builder** designed specifically for Arabic-speaking educators. It solves the pain of manually creating exams from textbooks by providing an intelligent, AI-powered workflow:
+AKONY is undergoing a massive pivot. Originally an on-the-fly "bring-your-own-PDF" analyzer, AKONY is evolving into the **ultimate database-driven Iraqi exam generator** tailored specifically for K-12 educators, students, and parents.
 
-1. **Upload** your curriculum PDF or textbook images
-2. **Analyze** the content instantly with the Google Gemini 2.5 Flash Vision AI
-3. **Structure** the exam using AI-suggested categories, Quick-Start templates, and difficulty ratings
-4. **Edit** extracted text, add MCQ options, and evaluate the exam balance with AI
-5. **Export** a print-ready, optimized RTL PDF with multiple exam versions
+1. **Select** your Grade, Subject, and Exam Type (Daily, Monthly, Ministerial Final).
+2. **Dial** your desired difficulty on the slider.
+3. **Generate** a perfectly mimicking, RTL-ready PDF exam instantly—populated from a massive database of officially structured curriculum questions.
+4. *(Legacy Pro Tier)* **Upload** custom college-level PDFs and use Gemini Multimodal AI to extract and build exams yourself.
 
 ### ✨ Key Features
 
@@ -266,6 +265,11 @@ const useExamStore = create<ExamStore>((set) => ({
 - **Premium Chapter Select UI**: Upgraded the manual chapter slider into a grid of interactive glassmorphism cards. Features dynamic scale transformations, active gradient styling, and custom hover states. The fractional slider was moved to a cleanly segregated "Manual Input" fallback.
 - **Gemini 429 Rate Limit Handlers**: Upgraded API routes and frontend hooks to dynamically parse Google Gemini `429 Too Many Requests` error delays (e.g., `retry in 52.031s`). The system now natively pauses map-reduce loops to weather quota limits and strictly resumes without dropping chunks.
 - **Cache Intercepts**: Prevented the UI from aggressively pinging Gemini by natively intercepting Chapter Extractions using IndexedDB lookaheads.
+- **Responsive Design**: Full mobile/tablet responsive across all pages (scope, structure, edit, preview)
+- **Logo Upload**: School logo support in exam header with custom upload in edit page
+- **Question Points**: Added marks/points system for each question with PDF export support
+- **Answer Key Improvements**: Better formatting with question grouping and type labels
+- **Next.js Optimizations**: Package imports optimization and production build improvements
 
 ### ⚠️ Known Issues / Needs Fixing (WIP)
 - **Fast-Path TOC Extraction (Vision AI Blindspots)**: The AI is struggling to aggressively pull Table of Contents structures from the first/last 15 pages of scanned PDFs. Despite attaching physical `[--- PDF Physical Page X ---]` text markers, the model occasionally hallucinates `[]` (empty arrays) when processing 30-image payloads simultaneously. Additionally, executing this endpoint immediately after heavy processing hits the Free Tier 15 RPM limit, causing a mandatory 60-second browser freeze. **Action Item**: Rethink the 30-image vision strategy or switch to a lightweight specialized OCR step rather than full Gemini Multimodal analysis.
@@ -274,18 +278,21 @@ const useExamStore = create<ExamStore>((set) => ({
 
 | Sprint | Focus | Status |
 |--------|-------|--------|
-| Sprint 6 | Polish & Launch (responsive design, deploy to Vercel) | 📋 Planned |
-| Sprint 7 | Cloud Features (Supabase auth, exam persistence) | 📋 Planned |
-| Sprint 8 | Collaboration (sharing, templates marketplace) | 📋 Planned |
+| Sprint 6 | K-12 Database Pivot (Ministerial Physics MVP, Supabase DB Setup, Exam Wizard) | 🚀 NEXT |
+| Sprint 7 | AI Auto-Grading (Photograph answer sheets for targeted analytics) | 📋 Planned |
+| Sprint 8 | Legacy Tools Refinement (Polishing the PDF upload system) | 📋 Planned |
+
+### K-12 Pivot Details
+The upcoming sprints focus heavily on moving away from strictly on-the-fly Vision AI extraction for public users, towards a 1-click generation model leveraging pre-ingested structural templates and relational databases. See `AI_CONTEXT.md` for strict technical guidelines on the upcoming implementations.
 
 ### Sprint 5 Tasks
 
-- [ ] Dark/light mode toggle in header
-- [ ] Responsive design for tablet/mobile
-- [ ] Exam header customization (logo, school info)
-- [ ] Answer key generation improvements
+- [x] Dark/light mode toggle in header
+- [x] Responsive design for tablet/mobile
+- [x] Exam header customization (logo, school info)
+- [x] Answer key generation improvements
 - [ ] Deploy to Vercel
-- [ ] Performance optimization (lazy loading, code splitting)
+- [x] Performance optimization (lazy loading, code splitting)
 
 ---
 
