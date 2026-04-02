@@ -39,3 +39,38 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# documentation (redundant project files)
+README.md
+implementation_plan.md
+product_documentation.md
+groq-models.txt
+
+# test/temp files
+clear-cache.ts
+test-cache.ts
+test-gemini*.js
+test-gemini*.ts
+test-gemini*.txt
+test-models.js
+lint_errors.txt
+ts_errors.txt
+tsc_output.txt
+
+# material files (video/pdf artifacts)
+material/*.mp4
+material/*.pdf
+
+# Windows system files
+Thumbs.db
+Desktop.ini
+nul
+CON
+PRN
+AUX
+NUL
+COM[1-9]
+LPT[1-9]
+
+# AI session logs (instance-specific)
+AI_SESSION_LOG.md

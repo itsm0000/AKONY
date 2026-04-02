@@ -35,6 +35,8 @@ const TYPE_ICONS: Record<QuestionType, string> = {
   drawing: "🎨",
   mcq: "✓",
   short_answer: "✏️",
+  explanation: "💡",
+  activity: "🔬",
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -316,6 +318,15 @@ export function QuestionCard({
                     <button onClick={() => onUpdate({ answerSpaceLines: Math.min(15, (question.answerSpaceLines ?? 0) + 1) })} className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-sm">+</button>
                 </div>
                 <span className="text-xs text-muted-foreground">سطر</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-1.5">
+                <span className="text-xs text-muted-foreground">الدرجة:</span>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => onUpdate({ points: Math.max(0, (question.points ?? 0) - 1) })} className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-sm">−</button>
+                  <span className="font-inter text-sm font-bold text-foreground w-4 text-center">{question.points ?? 0}</span>
+                  <button onClick={() => onUpdate({ points: Math.min(50, (question.points ?? 0) + 1) })} className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-sm">+</button>
+                </div>
+                <span className="text-xs text-muted-foreground">درجة</span>
               </div>
             </div>
 

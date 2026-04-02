@@ -1,2 +1,0 @@
-﻿src/app/exam/[id]/scope/page.tsx(10,26): error TS2307: Cannot find module '@/components/ui/checkbox' or its corresponding type declarations.
-src/app/exam/[id]/scope/page.tsx(11,24): error TS2307: Cannot find module '@/components/ui/switch' or its corresponding type declarations.

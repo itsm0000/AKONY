@@ -182,10 +182,10 @@ export default function StructurePage() {
         <div className="absolute -top-40 end-1/4 h-[400px] w-[400px] rounded-full bg-[oklch(0.65_0.20_250/0.06)] blur-[120px]" />
       </div>
 
-      <div className="relative mx-auto max-w-3xl px-6 py-12">
+      <div className="relative mx-auto max-w-xl px-4 py-8">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">بناء هيكل الامتحان</h1>
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">بناء هيكل الامتحان</h1>
           <p className="mt-2 text-muted-foreground">
             {exam.title} — صفحات {exam.scope.startPage} إلى {exam.scope.endPage}
           </p>
@@ -200,14 +200,14 @@ export default function StructurePage() {
             className="mb-6 rounded-2xl border border-border/60 bg-muted/20 p-4"
           >
             <p className="mb-3 text-sm font-semibold text-foreground">⚡ ابدأ بقالب جاهز</p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3">
               {TEMPLATES.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => handleApplyTemplate(t)}
-                  className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-background/50 px-4 py-3 text-start transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm"
+                  className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-background/50 px-3 py-2 text-start transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm sm:px-4 sm:py-3"
                 >
-                  <span className="text-xl">{t.emoji}</span>
+                  <span className="text-lg sm:text-xl">{t.emoji}</span>
                   <span className="text-sm font-semibold text-foreground">{t.title}</span>
                   <span className="text-xs text-muted-foreground">{t.subtitle}</span>
                 </button>
@@ -223,9 +223,9 @@ export default function StructurePage() {
           transition={{ delay: 0.1 }}
           className="mb-6 rounded-2xl border border-border/60 bg-muted/20 p-4"
         >
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
             <p className="text-sm font-semibold text-foreground">🎯 مستوى صعوبة الامتحان</p>
-            <span className="rounded-lg bg-muted px-3 py-1 font-inter text-sm font-bold text-foreground">
+            <span className="rounded-lg bg-muted px-3 py-1 font-inter text-xs sm:text-sm font-bold text-foreground">
               {examDifficulty}/10 — {difficultyText}
             </span>
           </div>
@@ -308,10 +308,10 @@ export default function StructurePage() {
               variant="outline"
               size="sm"
               onClick={() => activeVersionId && addQuestion(activeVersionId, type)}
-              className="gap-1.5 transition-all hover:scale-[1.02]"
+              className="gap-1 text-xs sm:text-sm transition-all hover:scale-[1.02]"
             >
               <span>{emoji}</span>
-              {label}
+              <span className="hidden sm:inline">{label}</span>
             </Button>
           ))}
         </motion.div>
@@ -369,11 +369,11 @@ export default function StructurePage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.25 }}
-              className="glass-card max-w-lg w-full rounded-3xl p-8 shadow-2xl"
+              className="glass-card max-w-lg w-full rounded-3xl p-4 sm:p-8 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-foreground">🔍 تقييم هيكل الامتحان</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground">🔍 تقييم هيكل الامتحان</h2>
                 <button
                   onClick={() => setShowEvalModal(false)}
                   className="rounded-full p-2 text-muted-foreground hover:bg-muted"

@@ -5,7 +5,9 @@ export type QuestionType =
   | "comparison"
   | "drawing"
   | "mcq"
-  | "short_answer";
+  | "short_answer"
+  | "explanation"
+  | "activity";
 
 export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   problem: "مسألة / حساب",
@@ -14,6 +16,8 @@ export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   drawing: "رسم / توضيح",
   mcq: "اختيار من متعدد",
   short_answer: "إجابة قصيرة",
+  explanation: "شرح / تعليل",
+  activity: "نشاط",
 };
 
 // ─── MCQ Option ───────────────────────────────────────
@@ -47,6 +51,7 @@ export interface Question {
   sortOrder: number;
   mcqOptionsCount?: number;  // how many choices for MCQ questions (default 4)
   answerSpaceLines?: number; // blank lines printed per sub-question (0 = auto)
+  points?: number; // marks for this question
 }
 
 // ─── Exam Version ─────────────────────────────────────
@@ -80,6 +85,7 @@ export interface ExamMetadata {
   duration: string;
   date: string;
   totalMarks?: number;
+  logoUrl?: string;
 }
 
 // ─── Exam ─────────────────────────────────────────────

@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
   Font,
 } from "@react-pdf/renderer";
@@ -32,6 +33,13 @@ const styles = StyleSheet.create({
     direction: "rtl",
     lineHeight: 1.5,
   },
+  answerKeyPage: {
+    padding: 30,
+    fontFamily: "Amiri",
+    fontSize: 10,
+    direction: "rtl",
+    lineHeight: 1.5,
+  },
   header: {
     borderBottom: "2px solid #333",
     paddingBottom: 12,
@@ -41,6 +49,11 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     justifyContent: "space-between",
     marginBottom: 4,
+  },
+  headerLogo: {
+    width: 40,
+    height: 40,
+    objectFit: "contain",
   },
   headerText: {
     fontSize: 10,
@@ -74,6 +87,11 @@ const styles = StyleSheet.create({
   questionType: {
     fontSize: 9,
     color: "#666",
+  },
+  questionPoints: {
+    fontSize: 9,
+    color: "#666",
+    fontWeight: 700,
   },
   instructions: {
     fontSize: 9,
@@ -136,6 +154,68 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#aaa",
   },
+  answerKeyHeader: {
+    borderBottom: "2px solid #333",
+    paddingBottom: 12,
+    marginBottom: 20,
+  },
+  answerKeyTitle: {
+    fontSize: 14,
+    fontWeight: 700,
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  answerKeySubtitle: {
+    fontSize: 10,
+    textAlign: "center",
+    color: "#555",
+  },
+  answerKeyQuestion: {
+    background: "#f9f9f9",
+    borderRadius: 4,
+    padding: 12,
+    marginBottom: 12,
+    border: "1px solid #eee",
+  },
+  answerKeyQuestionHeader: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  answerKeyQuestionNumber: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#111",
+  },
+  answerKeyQuestionType: {
+    fontSize: 9,
+    color: "#666",
+    background: "#eee",
+    padding: "2px 6px",
+    borderRadius: 3,
+    marginRight: 8,
+  },
+  answerKeyQuestionPoints: {
+    fontSize: 9,
+    color: "#666",
+    fontWeight: 700,
+  },
+  answerKeySubAnswer: {
+    flexDirection: "row-reverse",
+    paddingRight: 8,
+    marginBottom: 4,
+  },
+  answerKeySubLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#333",
+    minWidth: 18,
+  },
+  answerKeyContent: {
+    fontSize: 10,
+    color: "#222",
+    flex: 1,
+  },
 });
 
 interface ExamPdfDocumentProps {
@@ -155,6 +235,11 @@ function QuestionBlock({ question }: { question: Question }) {
         <Text style={[styles.questionType, { marginRight: 6 }]}>
           ({QUESTION_TYPE_LABELS[question.type]})
         </Text>
+        {question.points !== undefined && (
+          <Text style={[styles.questionPoints, { marginRight: 6 }]}>
+            (درجة: {question.points})
+          </Text>
+        )}
       </View>
 
       {question.instructions && (
@@ -216,24 +301,36 @@ function SubQuestionBlock({ sub }: { sub: SubQuestion }) {
   );
 }
 
+function calculateTotalMarks(version: ExamVersion, metadataTotalMarks?: number): number {
+  const questionPointsSum = version.questions.reduce((sum, q) => sum + (q.points || 0), 0);
+  return questionPointsSum > 0 ? questionPointsSum : (metadataTotalMarks || 0);
+}
+
 export function ExamPdfDocument({ exam, version, showAnswerKey = false }: ExamPdfDocumentProps) {
+  const totalMarks = calculateTotalMarks(version, exam.metadata.totalMarks);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <Text style={styles.headerText}>
-              {exam.metadata.schoolName || "اسم المدرسة"}
-            </Text>
+            {exam.metadata.logoUrl && (
+              <Image src={exam.metadata.logoUrl} style={styles.headerLogo} />
+            )}
             <Text style={styles.headerText}>
               {exam.metadata.date || "التاريخ"}
             </Text>
           </View>
           <View style={styles.headerRow}>
             <Text style={styles.headerText}>
+              {exam.metadata.schoolName || "اسم المدرسة"}
+            </Text>
+            <Text style={styles.headerText}>
               المادة: {exam.metadata.subject || "___"}
             </Text>
+          </View>
+          <View style={styles.headerRow}>
+            <Text style={styles.headerText} />
             <Text style={styles.headerText}>
               المدة: {exam.metadata.duration || "___"}
             </Text>
@@ -241,7 +338,7 @@ export function ExamPdfDocument({ exam, version, showAnswerKey = false }: ExamPd
           <Text style={styles.headerTitle}>{exam.title}</Text>
           <Text style={styles.headerSubtitle}>
             نموذج ({version.label})
-            {exam.metadata.totalMarks ? ` — الدرجة الكلية: ${exam.metadata.totalMarks}` : ""}
+            {totalMarks > 0 ? ` — الدرجة الكلية: ${totalMarks}` : ""}
           </Text>
         </View>
 
@@ -254,39 +351,58 @@ export function ExamPdfDocument({ exam, version, showAnswerKey = false }: ExamPd
 
       {/* Answer Key Page (optional) */}
       {showAnswerKey && (
-        <Page size="A4" style={styles.page}>
-          <Text style={[styles.headerTitle, { marginBottom: 20 }]}>
-            مفتاح الإجابة — نموذج ({version.label})
-          </Text>
+        <Page size="A4" style={styles.answerKeyPage} wrap={false}>
+          <View style={styles.answerKeyHeader}>
+            <Text style={styles.answerKeyTitle}>
+              مفتاح الإجابة
+            </Text>
+            <Text style={styles.answerKeySubtitle}>
+              {exam.title} — نموذج ({version.label})
+            </Text>
+          </View>
+
           {version.questions.map((q) => (
-            <View key={q.id} style={{ marginBottom: 12 }}>
-              <View style={{ flexDirection: "row-reverse", alignItems: "center", marginBottom: 6 }}>
-                <Text style={{ fontSize: 11, fontWeight: 700, color: "#111" }}>
-                  السؤال {q.questionNumber}:
+            <View key={q.id} style={styles.answerKeyQuestion}>
+              <View style={styles.answerKeyQuestionHeader}>
+                <Text style={styles.answerKeyQuestionNumber}>
+                  السؤال {q.questionNumber}
                 </Text>
-                <Text style={{ fontSize: 9, color: "#666", marginRight: 6 }}>
-                  ({QUESTION_TYPE_LABELS[q.type]})
+                <Text style={styles.answerKeyQuestionType}>
+                  {QUESTION_TYPE_LABELS[q.type]}
                 </Text>
+                {q.points !== undefined && (
+                  <Text style={[styles.answerKeyQuestionPoints, { marginRight: 8 }]}>
+                    (درجة: {q.points})
+                  </Text>
+                )}
               </View>
 
-              {q.subQuestions.map((sub) => (
-                <View key={sub.id} style={{ flexDirection: "row-reverse", paddingRight: 16, marginBottom: 4 }}>
-                  <Text style={{ fontSize: 10, fontWeight: 700, color: "#333", minWidth: 16, marginLeft: 6 }}>
-                    {sub.label})
-                  </Text>
-                  <Text style={{ fontSize: 10, color: "#222" }}>
-                    {sub.type === "mcq" && sub.mcqOptions
-                      ? (() => {
-                          const correct = sub.mcqOptions.find((o) => o.isCorrect);
-                          return correct ? `${correct.label} — ${correct.text}` : "لم يتم تحديد إجابة صحيحة";
-                        })()
-                      : sub.contentText?.slice(0, 80) + (sub.contentText?.length > 80 ? "..." : "") || "—"}
-                  </Text>
-                </View>
-              ))}
+              <View>
+                {q.subQuestions.map((sub) => (
+                  <View key={sub.id} style={styles.answerKeySubAnswer}>
+                    <Text style={styles.answerKeySubLabel}>
+                      {sub.label})
+                    </Text>
+                    <Text style={styles.answerKeyContent}>
+                      {sub.type === "mcq" && sub.mcqOptions
+                        ? (() => {
+                            const correct = sub.mcqOptions.find((o) => o.isCorrect);
+                            return correct ? `${correct.label} — ${correct.text}` : "لم يتم تحديد إجابة صحيحة";
+                          })()
+                        : sub.contentText || "—"}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
           ))}
-          <Text style={styles.footer}>
+          
+          <Text 
+            style={[
+              styles.footer,
+              { position: "absolute", bottom: 15 }
+            ]}
+          >
             AKONY — مفتاح الإجابة (سري)
           </Text>
         </Page>

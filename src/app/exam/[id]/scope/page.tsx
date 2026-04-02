@@ -369,7 +369,7 @@ export default function ScopePage() {
         <div className="absolute -top-40 start-1/4 h-[400px] w-[400px] rounded-full bg-[oklch(0.72_0.19_163/0.06)] blur-[120px]" />
       </div>
 
-      <div className="relative mx-auto max-w-2xl px-6 py-20">
+      <div className="relative mx-auto w-full max-w-xl px-4 py-12 md:py-20">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -377,8 +377,8 @@ export default function ScopePage() {
           transition={{ duration: 0.5 }}
           className="mb-8 text-center"
         >
-          <h1 className="text-3xl font-bold text-foreground">تحديد نطاق الامتحان</h1>
-          <p className="mt-2 text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">تحديد نطاق الامتحان</h1>
+          <p className="mt-2 text-sm md:text-base text-muted-foreground">
             حدد الفصول والصفحات التي يغطيها الامتحان المأخوذ من الكتاب المصدر
           </p>
         </motion.div>
@@ -399,8 +399,8 @@ export default function ScopePage() {
                 id="exam-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="مثال: امتحان الفيزياء النصفي — الفصل الرابع"
-                className="text-base"
+                placeholder="مثال: امتحان الفيزياء النصفي — فصل الرابع"
+                className="text-base min-h-[48px]"
                 dir="rtl"
               />
             </CardContent>
@@ -541,7 +541,7 @@ export default function ScopePage() {
                             <Button 
                               onClick={handleExtractAiToc} 
                               disabled={isExtractingAiToc}
-                              className="w-full sm:w-auto flex flex-row items-center gap-2 mt-2 h-11 px-8 rounded-full shadow-[0_0_15px_-3px_hsl(var(--primary))]"
+                              className="w-full flex flex-row items-center gap-2 mt-2 h-11 px-8 rounded-full shadow-[0_0_15px_-3px_hsl(var(--primary))]"
                             >
                               <Sparkles className="w-4 h-4" />
                               <span>استخراج الفصول بالذكاء الاصطناعي ✨</span>
@@ -612,7 +612,7 @@ export default function ScopePage() {
                               disabled={isExtractingAiToc}
                               variant="ghost"
                               size="sm"
-                              className="w-full sm:w-auto flex flex-row items-center gap-2 text-primary"
+                              className="w-full flex flex-row items-center gap-2 text-primary"
                             >
                               {isExtractingAiToc ? "جاري الاستخراج..." : "التبديل لاستخراج الفصول بالذكاء الاصطناعي ✨"}
                             </Button>
@@ -629,7 +629,7 @@ export default function ScopePage() {
                               min={1}
                               value={startPage}
                               onChange={(e) => setStartPage(Number(e.target.value))}
-                              className="font-inter text-center text-lg"
+                              className="font-inter text-center text-lg min-h-[48px]"
                               dir="ltr"
                             />
                           </div>
@@ -646,7 +646,7 @@ export default function ScopePage() {
                               min={startPage}
                               value={endPage}
                               onChange={(e) => setEndPage(Number(e.target.value))}
-                              className="font-inter text-center text-lg"
+                              className="font-inter text-center text-lg min-h-[48px]"
                               dir="ltr"
                             />
                           </div>
@@ -661,7 +661,7 @@ export default function ScopePage() {
                             value={chaptersInput}
                             onChange={(e) => setChaptersInput(e.target.value)}
                             placeholder="مثال: الفصل الرابع، أو الفصل الثالث كامل"
-                            className="text-base"
+                            className="text-base min-h-[48px]"
                             dir="rtl"
                           />
                         </div>

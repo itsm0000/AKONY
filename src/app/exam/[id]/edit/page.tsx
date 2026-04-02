@@ -8,6 +8,8 @@ import { useExamStore } from "@/lib/stores/examStore";
 import { SubQuestionEditor } from "@/components/SubQuestionEditor";
 import { useOcr } from "@/hooks/useOcr";
 import { QUESTION_TYPE_LABELS } from "@/lib/types/exam";
+import { useState, useEffect } from "react";
+import { ProBanner } from "@/components/ProBanner";
 
 export default function EditPage() {
   const router = useRouter();
@@ -24,6 +26,14 @@ export default function EditPage() {
   const activeVersion = exam?.versions.find((v) => v.id === activeVersionId);
   const { extractText, isProcessing, progress } = useOcr();
 
+  const [logoPreview, setLogoPreview] = useState<string>("");
+
+  useEffect(() => {
+    if (exam && exam.metadata.logoUrl) {
+      setLogoPreview(exam.metadata.logoUrl);
+    }
+  }, [exam?.metadata?.logoUrl]);
+
   if (!exam) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -39,32 +49,44 @@ export default function EditPage() {
 
   return (
     <main className="relative min-h-screen">
+      {/* Pro upsell banner — shown to free-tier users only */}
+      <ProBanner isPro={false} />
+
       {/* Background */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 end-1/3 h-[400px] w-[400px] rounded-full bg-[oklch(0.65_0.20_250/0.06)] blur-[120px]" />
       </div>
 
-      <div className="relative mx-auto max-w-3xl px-6 py-8">
+      <div className="relative mx-auto max-w-xl px-4 py-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between"
+          className="mb-4 sm:mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
-            <h1 className="text-2xl font-bold text-foreground">تحرير المحتوى</h1>
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">تحرير المحتوى</h1>
             <p className="text-sm text-muted-foreground">
               عدّل نصوص الأسئلة وأضف خيارات الإجابة — {exam.title}
             </p>
           </div>
-          <div className="flex w-full sm:w-auto gap-2">
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => router.push(`/exam/${examId}/structure`)}>
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none h-10 sm:h-8" onClick={() => router.push(`/exam/${examId}/structure`)}>
               ← بناء الهيكل
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/exam/${examId}/preview`)}
+              className="h-10 sm:h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+              title="التبديل إلى المعاينة"
+            >
+              👁️
             </Button>
             <Button
               size="sm"
               onClick={() => router.push(`/exam/${examId}/preview`)}
-              className="accent-gradient border-0 text-white"
+              className="accent-gradient border-0 text-white h-10 sm:h-8"
             >
               التالي — المعاينة →
             </Button>
@@ -76,10 +98,10 @@ export default function EditPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-card mb-6 rounded-2xl p-4"
+          className="glass-card mb-4 sm:mb-6 rounded-2xl p-4"
         >
           <h3 className="mb-3 text-sm font-semibold text-foreground">بيانات الامتحان</h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="mb-1 block text-[10px] text-muted-foreground">اسم المدرسة</label>
               <Input
@@ -141,11 +163,47 @@ export default function EditPage() {
                 dir="ltr"
               />
             </div>
+            <div>
+              <label className="mb-1 block text-[10px] text-muted-foreground">شعار المدرسة</label>
+              <div className="flex items-center gap-2">
+                {logoPreview ? (
+                  <div className="relative h-8 w-12 shrink-0 overflow-hidden rounded border border-border/30">
+                    <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" />
+                  </div>
+                ) : (
+                  <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded border border-dashed border-border/50 bg-muted/20 text-xs text-muted-foreground">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+                <label className="cursor-pointer rounded bg-muted px-2 py-1 text-xs text-muted-foreground hover:bg-muted/80">
+                  رفع
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const dataUrl = event.target?.result as string;
+                          setLogoPreview(dataUrl);
+                          useExamStore.getState().setMetadata({ logoUrl: dataUrl });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
           </div>
         </motion.div>
 
         {/* Questions */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <AnimatePresence mode="popLayout">
             {activeVersion?.questions.map((question) => (
               <motion.div
@@ -157,7 +215,7 @@ export default function EditPage() {
                 className="glass-card rounded-2xl overflow-hidden"
               >
                 {/* Question header */}
-                <div className="flex items-center gap-3 px-5 py-4 border-b border-border/30">
+                <div className="flex items-center gap-3 px-4 py-3 sm:px-5 sm:py-4 border-b border-border/30">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-inter text-sm font-bold text-primary">
                     س{question.questionNumber}
                   </div>
@@ -175,7 +233,7 @@ export default function EditPage() {
                 </div>
 
                 {/* Sub-questions */}
-                <div className="space-y-3 p-4">
+                <div className="space-y-3 p-3 sm:p-4">
                   {question.subQuestions.length > 0 ? (
                     question.subQuestions.map((sub) => (
                       <SubQuestionEditor
