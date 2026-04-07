@@ -27,6 +27,18 @@
 
 ---
 
+## Minimize Terminal Prompts — Batch Everything
+
+The user is studying and developing simultaneously. Every approval prompt is an interruption. Follow these rules:
+
+1. **Batch all git operations into one** — never run `git add`, `git commit`, `git push` as separate steps. Always: `git add -A; git commit -m "..."; git push origin [branch]` in a single command.
+2. **Combine file operations** — use semicolons to chain PowerShell commands rather than making separate tool calls: `New-Item ...; Copy-Item ...; Remove-Item ...`
+3. **Read-before-write** — gather all information in one pass (use `SafeToAutoRun: true` for all read operations) before making any write calls.
+4. **One commit per session** — unless the user explicitly asks for multiple commits, accumulate all changes and commit once at the end.
+5. **Never prompt for confirmation on read-only operations** — `git status`, `Get-ChildItem`, `cat`, `git log` should always be marked safe to auto-run.
+
+---
+
 ## Session Wrap-Up Protocol
 
 When asked to "wrap up", "end the session", "commit everything", or "save progress":

@@ -10,5 +10,11 @@ Key rules summary:
 - TypeScript strict mode — no `any`.
 - NEVER break the Zustand store (`src/lib/stores/examStore.ts`).
 - NEVER break the legacy PDF flow (Path B: Upload → Scope → Structure → Edit → Preview).
-- When asked to "wrap up session": check git status → ask for approval → commit → update `src/documentation/AKONY_MASTER.md` → overwrite `src/documentation/HANDOFF.md`.
+- When asked to "wrap up the session": check git status → ask for approval → commit → update `src/documentation/AKONY_MASTER.md` → overwrite `src/documentation/HANDOFF.md`.
 - Read `src/documentation/HANDOFF.md` at session start to know where development was left.
+
+## Minimize Prompts — Batch Everything
+- NEVER run `git add`, `git commit`, `git push` as separate commands. Always chain: `git add -A; git commit -m "..."; git push origin [branch]`
+- Chain file operations with semicolons in one command instead of multiple separate tool calls.
+- Mark all read-only commands as safe to auto-run (git status, ls, cat, git log, tsc --noEmit).
+- One commit per session. Accumulate changes, commit once at the end.
