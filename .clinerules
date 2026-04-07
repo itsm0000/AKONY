@@ -1,0 +1,14 @@
+# AKONY — Agent Rules
+# Read by: Kilo Code, Cline, Roo, and any Cline-based AI extension
+
+Read `src/documentation/AGENTS.md` for the full rule set and project context.
+
+Key rules summary:
+- Run `npm run dev` only — no separate backend. Supabase is the cloud backend.
+- ALL work stays on branch `feature/k12-database-pivot`. Do NOT commit to `main`.
+- RTL-first CSS (logical properties). Arabic-first UI.
+- TypeScript strict mode — no `any`.
+- NEVER break the Zustand store (`src/lib/stores/examStore.ts`).
+- NEVER break the legacy PDF flow (Path B: Upload → Scope → Structure → Edit → Preview).
+- When asked to "wrap up session": check git status → ask for approval → commit → update `src/documentation/AKONY_MASTER.md` → overwrite `src/documentation/HANDOFF.md`.
+- Read `src/documentation/HANDOFF.md` at session start to know where development was left.
